@@ -1,8 +1,9 @@
+#pragma once
+
+#include <fstream>
 #include <vector>
 #include <stack>
 #include <functional>
-
-using comp_flags = unsigned short;
 
 struct Entity {
 	Entity(std::size_t gen, std::size_t index)
@@ -11,8 +12,21 @@ struct Entity {
 	const std::size_t index;
 };
 
+using comp_flags = unsigned short;
 struct ComponentConfig {
-	comp_flags bitfield;
+	// just sets everything to nullopt
+	ComponentConfig();
+	// use yaml files for configs
+	ComponentConfig(std::ifstream);
+
+	// use a function so users don't need to pass in every
+	// component they want at once
+	comp_flags bitfield();
+
+	// optional<name>
+	// optional<position>
+	// optional<velocity>
+	// and so on, write a macro for this
 };
 
 class System {
@@ -26,6 +40,7 @@ private:
 	std::stack<std::size_t> m_next_alloc;
 	std::vector<std::size_t> m_generation;
 	std::vector<comp_flags> m_component;
+
 	// vec<name>
 	// vec<position>
 	// vec<velocity>
