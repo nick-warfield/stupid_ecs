@@ -3,8 +3,9 @@
 #include <fstream>
 #include <vector>
 #include <stack>
-#include <functional>
+#include <optional>
 
+// odd generations are alive, evens are dead
 struct Entity {
 	Entity(std::size_t gen, std::size_t index)
 		: generation(gen), index(index) { }
@@ -31,10 +32,8 @@ struct ComponentConfig {
 
 class System {
 public:
-	System();
-	Entity create_entity(ComponentConfig);
-	void remove_entity(const Entity &);
-	void for_each(comp_flags, std::is_function<void>);
+	Entity make(ComponentConfig);
+	void erase(const Entity &);
 
 private:
 	std::stack<std::size_t> m_next_alloc;

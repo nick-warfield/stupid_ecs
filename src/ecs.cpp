@@ -1,10 +1,6 @@
 #include "ecs.hpp"
 
-System::System() {
-	m_next_alloc.push(0);
-}
-
-Entity System::create_entity(ComponentConfig cc) {
+Entity System::make(ComponentConfig cc) {
 	if (m_next_alloc.empty()) {
 		m_generation.push_back(0);
 		m_component.push_back(cc.bitfield());
@@ -18,6 +14,9 @@ Entity System::create_entity(ComponentConfig cc) {
 	}
 }
 
-void System::remove_entity(const Entity &id) {
+void System::erase(const Entity &id) {
+	if (m_generation[id.index] != id.generation) return;
+	m_generation[id.index]++;
+	m_next_alloc.push(id.index);
 }
 
