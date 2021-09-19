@@ -1,11 +1,6 @@
-#include <iostream>
-#include "ecs.hpp"
-
-component_flags ComponentConfig::bitmask() {
-	return COMP_ALIVE
-		| (data1 ? COMP_DATA1 : 0)
-		| (data2 ? COMP_DATA2 : 0);
-}
+#include "system.hpp"
+#include "component.hpp"
+#include "entity.hpp"
 
 Entity System::make(ComponentConfig cc) {
 	if (m_next_alloc.empty()) {
@@ -44,6 +39,7 @@ bool System::has_component(const Entity& id, component_flags flag) {
 
 std::optional<System::Item> System::get(const Entity &id) {
 	if (!is_alive(id)) return {};
+
 	Item i;
 	if (has_component(id, COMP_DATA1))
 		i.data1 = std::ref(m_data1[id.index]);

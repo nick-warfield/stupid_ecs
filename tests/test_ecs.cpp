@@ -4,7 +4,7 @@
 TEST_CASE("ECS") {
 	System system;
 	Entity e1 = Entity(0, 0);
-	REQUIRE_FALSE(system.get(e1));
+	REQUIRE_FALSE(system.get(e1).has_value());
 
 	ComponentConfig cc;
 	cc.data1 = 1;
@@ -54,7 +54,7 @@ TEST_CASE("ECS") {
 	REQUIRE(item->data1 == 42);
 	REQUIRE(item->data2->get() == "apple");
 
-	cc.data1 = 69;
+	cc.data1 = {};
 	cc.data2 = "pepper";
 	auto e3 = system.make(cc);
 	REQUIRE(e3.generation == 1);
@@ -72,9 +72,8 @@ TEST_CASE("ECS") {
 
 	item = system.get(e3);
 	REQUIRE(item.has_value());
-	REQUIRE(item->data1.has_value());
+	REQUIRE_FALSE(item->data1.has_value());
 	REQUIRE(item->data2.has_value());
-	REQUIRE(item->data1 == 69);
 	REQUIRE(item->data2->get() == "pepper");
 }
 
