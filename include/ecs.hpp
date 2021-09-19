@@ -41,10 +41,10 @@ public:
 	bool has_component(const Entity&, component_flags);
 
 	struct Item {
-		std::optional<std::unique_ptr<int>> data1;
-		std::optional<std::unique_ptr<std::string>> data2;
+		std::optional<std::reference_wrapper<int>> data1;
+		std::optional<std::reference_wrapper<std::string>> data2;
 	};
-	std::optional<Item> operator[](const Entity &);
+	std::optional<Item> get(const Entity &);
 
 private:
 	std::stack<std::size_t> m_next_alloc;

@@ -28,14 +28,14 @@ bool System::has_component(const Entity& id, component_flags flag) {
 	return (m_component[id.index] & flag) == flag;
 }
 
-std::optional<System::Item> System::operator[](const Entity &id) {
+std::optional<System::Item> System::get(const Entity &id) {
 	if (!is_alive(id)) return {};
 
 	Item i;
 	if (has_component(id, COMP_DATA1))
-		i.data1 = std::make_unique<int>(m_data1[id.index]);
+		i.data1 = m_data1[id.index];
 	if (has_component(id, COMP_DATA2))
-		i.data2 = std::make_unique<std::string>(m_data2[id.index]);
+		i.data2 = m_data2[id.index];
 
 	return i;
 }
