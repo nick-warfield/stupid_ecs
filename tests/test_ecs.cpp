@@ -17,8 +17,8 @@ TEST_CASE("ECS") {
 	REQUIRE(item.has_value());
 	REQUIRE(item->data1.has_value());
 	REQUIRE(item->data2.has_value());
-	REQUIRE(item->data1.value() == 1);
-	REQUIRE(std::string(item->data2.value()) == "orange");
+	REQUIRE(item->data1 == 1);
+	REQUIRE(item->data2->get() == "orange");
 
 	cc.data1 = 42;
 	cc.data2 = "apple";
@@ -30,15 +30,15 @@ TEST_CASE("ECS") {
 	REQUIRE(item.has_value());
 	REQUIRE(item->data1.has_value());
 	REQUIRE(item->data2.has_value());
-	REQUIRE(item->data1.value() == 1);
-	REQUIRE(std::string(item->data2.value()) == "orange");
+	REQUIRE(item->data1 == 1);
+	REQUIRE(item->data2->get() == "orange");
 
 	item = system.get(e2);
 	REQUIRE(item.has_value());
 	REQUIRE(item->data1.has_value());
 	REQUIRE(item->data2.has_value());
-	REQUIRE(item->data1.value() == 42);
-	REQUIRE(std::string(item->data2.value()) == "apple");
+	REQUIRE(item->data1 == 42);
+	REQUIRE(item->data2->get() == "apple");
 
 	system.erase(e1);
 	REQUIRE(e1.generation == 0);
@@ -51,8 +51,8 @@ TEST_CASE("ECS") {
 	REQUIRE(item.has_value());
 	REQUIRE(item->data1.has_value());
 	REQUIRE(item->data2.has_value());
-	REQUIRE(item->data1.value() == 42);
-	REQUIRE(std::string(item->data2.value()) == "apple");
+	REQUIRE(item->data1 == 42);
+	REQUIRE(item->data2->get() == "apple");
 
 	cc.data1 = 69;
 	cc.data2 = "pepper";
@@ -67,14 +67,14 @@ TEST_CASE("ECS") {
 	REQUIRE(item.has_value());
 	REQUIRE(item->data1.has_value());
 	REQUIRE(item->data2.has_value());
-	REQUIRE(item->data1.value() == 42);
-	REQUIRE(std::string(item->data2.value()) == "apple");
+	REQUIRE(item->data1 == 42);
+	REQUIRE(item->data2->get() == "apple");
 
 	item = system.get(e3);
 	REQUIRE(item.has_value());
 	REQUIRE(item->data1.has_value());
 	REQUIRE(item->data2.has_value());
-	REQUIRE(item->data1.value() == 69);
-	REQUIRE(std::string(item->data2.value()) == "pepper");
+	REQUIRE(item->data1 == 69);
+	REQUIRE(item->data2->get() == "pepper");
 }
 

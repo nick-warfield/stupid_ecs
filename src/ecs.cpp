@@ -46,9 +46,9 @@ std::optional<System::Item> System::get(const Entity &id) {
 	if (!is_alive(id)) return {};
 	Item i;
 	if (has_component(id, COMP_DATA1))
-		i.data1 = m_data1[id.index];
+		i.data1 = std::ref(m_data1[id.index]);
 	if (has_component(id, COMP_DATA2))
-		i.data2 = m_data2[id.index];
+		i.data2 = std::ref(m_data2[id.index]);
 
 	return i;
 }
