@@ -8,7 +8,7 @@ Entity System::make(ComponentConfig cc) {
 		m_component.push_back(cc.bitmask() | COMP_ALIVE);
 		m_data1.push_back(cc.data1.value_or(0));
 		m_data2.push_back(cc.data2.value_or(""));
-		return Entity(0, m_generation.size() - 1);
+		return Entity(0, m_generation.size() - 1, this);
 	} else {
 		auto next = m_next_alloc.top();
 		m_next_alloc.pop();
@@ -16,7 +16,7 @@ Entity System::make(ComponentConfig cc) {
 		m_component[next] = cc.bitmask() | COMP_ALIVE;
 		m_data1[next] = cc.data1.value_or(0);
 		m_data2[next] = cc.data2.value_or("");
-		return Entity(m_generation[next], next);
+		return Entity(m_generation[next], next, this);
 	}
 }
 

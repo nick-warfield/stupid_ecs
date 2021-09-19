@@ -1,9 +1,28 @@
 #include "catch.hpp"
 #include "ecs.hpp"
 
-TEST_CASE("ECS") {
+TEST_CASE("Entity dereferencing") {
 	System system;
-	Entity e1 = Entity(0, 0);
+	ComponentConfig cc;
+	cc.data1 = 7;
+	cc.data2 = "word";
+
+	Entity e = system.make(cc);
+	REQUIRE((*e).has_value());
+	REQUIRE((*e)->data1 == 7);
+	REQUIRE((*e)->data2->get() == "word");
+	REQUIRE(e->data1 == 7);
+	REQUIRE(e->data2->get() == "word");
+
+	system.erase(e);
+	REQUIRE_FALSE((*e).has_value());
+	REQUIRE_THROWS((*e).value().data1 == 7);
+	REQUIRE_THROWS((*e).value().data2->get() == "word");
+}
+
+TEST_CASE("System Read and Write") {
+	System system;
+	Entity e1 = Entity(0, 0, &system);
 	REQUIRE_FALSE(system.get(e1).has_value());
 
 	ComponentConfig cc;
