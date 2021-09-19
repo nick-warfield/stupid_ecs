@@ -9,6 +9,11 @@
 struct Entity {
 	Entity(std::size_t gen, std::size_t index)
 		: generation(gen), index(index) { }
+	Entity(const Entity &) = default;
+	Entity& operator=(const Entity &) {
+		return *this;
+	}
+
 	const std::size_t generation;
 	const std::size_t index;
 };
@@ -20,11 +25,14 @@ const component_flags COMP_DATA2 = 0b0000000000000100;
 
 struct ComponentConfig {
 	// just sets everything to nullopt
-	ComponentConfig();
+	ComponentConfig() : data1(std::nullopt), data2(std::nullopt) { }
 	// use yaml files for configs
 	ComponentConfig(std::ifstream);
 
 	component_flags bitmask();
+
+	std::optional<int> data1;
+	std::optional<std::string> data2;
 
 	// optional<name>
 	// optional<position>
