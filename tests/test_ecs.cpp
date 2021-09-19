@@ -22,6 +22,30 @@ TEST_CASE("Entity dereferencing") {
 
 TEST_CASE("System Read and Write") {
 	System system;
+	ComponentConfig cc;
+	cc.data1 = 5;
+	cc.data2 = "pizza";
+	Entity e = system.make(cc);
+
+	REQUIRE(e->data1.has_value());
+	REQUIRE(e->data1 == 5);
+	REQUIRE(e->data2.has_value());
+	REQUIRE(e->data2->get() == "pizza");
+
+	*e->data1 += 2;
+	REQUIRE(e->data1 == 7);
+	e->data2->get() = "beer";
+	REQUIRE(e->data2->get() == "beer");
+
+	auto item = system.get(e);
+	*item->data1 += 13;
+	REQUIRE(e->data1 == 20);
+	e->data2->get() += " & pizza";
+	REQUIRE(e->data2->get() == "beer & pizza");
+}
+
+TEST_CASE("System Memory Allocation & Deallocation") {
+	System system;
 	Entity e1 = Entity(0, 0, &system);
 	REQUIRE_FALSE(system.get(e1).has_value());
 
