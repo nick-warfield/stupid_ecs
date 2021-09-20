@@ -1,3 +1,4 @@
+#include <bitset>
 #include <iostream>
 #include "catch.hpp"
 #include "ecs.hpp"
@@ -6,25 +7,40 @@ TEST_CASE("Component Config", "[component]") {
 	ComponentConfig<int, std::string, char> cc;
 	REQUIRE_FALSE(cc.get<COMPONENT_01_FLAG>().has_value());
 	REQUIRE_FALSE(cc.get<COMPONENT_02_FLAG>().has_value());
-	REQUIRE_FALSE(cc.get<8>().has_value());
+	REQUIRE_FALSE(cc.get<4>().has_value());
+	//REQUIRE(cc.bitmask() == 1);
 
+	std::bitset<8> bits;
+
+	bits = cc.bitmask();
+	std::cout << bits << std::endl;
 	cc.component = 7;
-	cc.remainder.component = "word";
+	bits = cc.bitmask();
+	std::cout << bits << std::endl;
 	cc.remainder.remainder.component = 'y';
+	bits = cc.bitmask();
+	std::cout << bits << std::endl;
+	cc.remainder.component = "word";
+	bits = cc.bitmask();
+	std::cout << bits << std::endl;
+
+	//REQUIRE(cc.bitmask() == (1));
+	//REQUIRE(cc.bitmask() == (4 | 1));
+	//REQUIRE(cc.bitmask() == (4 | 2 | 1));
 
 	REQUIRE(cc.get<COMPONENT_01_FLAG>().has_value());
 	REQUIRE(cc.component == 7);
-	REQUIRE(cc.component == cc.get<2>());
+	REQUIRE(cc.component == cc.get<1>());
 	REQUIRE(cc.component == cc.get<COMPONENT_01_FLAG>());
 
 	REQUIRE(cc.get<COMPONENT_02_FLAG>().has_value());
 	REQUIRE(cc.remainder.component == "word");
-	REQUIRE(cc.remainder.component == cc.get<4>());
+	REQUIRE(cc.remainder.component == cc.get<2>());
 	REQUIRE(cc.remainder.component == cc.get<COMPONENT_02_FLAG>());
 
-	REQUIRE(cc.get<8>().has_value());
+	REQUIRE(cc.get<4>().has_value());
 	REQUIRE(cc.remainder.remainder.component == 'y');
-	REQUIRE(cc.remainder.remainder.component == cc.get<8>());
+	REQUIRE(cc.remainder.remainder.component == cc.get<4>());
 }
 
 // TEST_CASE("Entity dereferencing") {
