@@ -8,25 +8,19 @@ TEST_CASE("Component Config", "[component]") {
 	REQUIRE_FALSE(cc.get<COMPONENT_01_FLAG>().has_value());
 	REQUIRE_FALSE(cc.get<COMPONENT_02_FLAG>().has_value());
 	REQUIRE_FALSE(cc.get<4>().has_value());
-	//REQUIRE(cc.bitmask() == 1);
+	REQUIRE(cc.bitmask() == 0);
 
-	std::bitset<8> bits;
 
-	bits = cc.bitmask();
-	std::cout << bits << std::endl;
-	cc.component = 7;
-	bits = cc.bitmask();
-	std::cout << bits << std::endl;
+	cc.component = 9;
+	REQUIRE(cc.bitmask() == (COMPONENT_01_FLAG));
 	cc.remainder.remainder.component = 'y';
-	bits = cc.bitmask();
-	std::cout << bits << std::endl;
+	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_01_FLAG));
 	cc.remainder.component = "word";
-	bits = cc.bitmask();
-	std::cout << bits << std::endl;
+	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_02_FLAG | COMPONENT_01_FLAG));
+	cc.component = std::nullopt;
+	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_02_FLAG));
+	cc.component = 7;
 
-	//REQUIRE(cc.bitmask() == (1));
-	//REQUIRE(cc.bitmask() == (4 | 1));
-	//REQUIRE(cc.bitmask() == (4 | 2 | 1));
 
 	REQUIRE(cc.get<COMPONENT_01_FLAG>().has_value());
 	REQUIRE(cc.component == 7);
@@ -45,9 +39,9 @@ TEST_CASE("Component Config", "[component]") {
 
 // TEST_CASE("Entity dereferencing") {
 // 	System system;
-// 	ComponentConfig cc;
-// 	cc.data1 = 7;
-// 	cc.data2 = "word";
+// 	ComponentConfig<int, std::string> cc;
+// 	cc.get<COMPONENT_01_FLAG>() = 7;
+// 	cc.get<COMPONENT_02_FLAG>() = "word";
 // 
 // 	Entity e = system.make(cc);
 // 	REQUIRE((*e).has_value());
@@ -64,9 +58,9 @@ TEST_CASE("Component Config", "[component]") {
 // 
 // TEST_CASE("System Read and Write") {
 // 	System system;
-// 	ComponentConfig cc;
-// 	cc.data1 = 5;
-// 	cc.data2 = "pizza";
+// 	ComponentConfig<int, std::string> cc;
+// 	cc.get<COMPONENT_01_FLAG>() = 5;
+// 	cc.get<COMPONENT_02_FLAG>() = "pizza";
 // 	Entity e = system.make(cc);
 // 
 // 	REQUIRE(e->data1.has_value());
@@ -91,10 +85,10 @@ TEST_CASE("Component Config", "[component]") {
 // 	Entity e1 = Entity(0, 0, &system);
 // 	REQUIRE_FALSE(system.get(e1).has_value());
 // 
-// 	ComponentConfig cc;
-// 	cc.data1 = 1;
-// 	cc.data2 = "orange";
-// 	e1 = system.make(cc);
+// 	ComponentConfig<int, std::string> cc;
+// 	cc.get<COMPONENT_01_FLAG>() = 1;
+// 	cc.get<COMPONENT_02_FLAG>() = "orange";
+// 	e1 = system.make<int, std::string>(cc);
 // 	REQUIRE(e1.generation == 0);
 // 	REQUIRE(e1.index == 0);
 // 
@@ -105,9 +99,9 @@ TEST_CASE("Component Config", "[component]") {
 // 	REQUIRE(item->data1 == 1);
 // 	REQUIRE(item->data2->get() == "orange");
 // 
-// 	cc.data1 = 42;
-// 	cc.data2 = "apple";
-// 	auto e2 = system.make(cc);
+// 	cc.get<COMPONENT_01_FLAG>() = 42;
+// 	cc.get<COMPONENT_02_FLAG>() = "apple";
+// 	auto e2 = system.make<int, std::string>(cc);
 // 	REQUIRE(e2.generation == 0);
 // 	REQUIRE(e2.index == 1);
 // 
@@ -139,8 +133,8 @@ TEST_CASE("Component Config", "[component]") {
 // 	REQUIRE(item->data1 == 42);
 // 	REQUIRE(item->data2->get() == "apple");
 // 
-// 	cc.data1 = {};
-// 	cc.data2 = "pepper";
+// 	cc.get<COMPONENT_01_FLAG>() = {};
+// 	cc.get<COMPONENT_02_FLAG>() = "pepper";
 // 	auto e3 = system.make(cc);
 // 	REQUIRE(e3.generation == 1);
 // 	REQUIRE(e3.index == 0);
