@@ -241,6 +241,43 @@ TEST_CASE("System<T, ...R> is_alive()", "[system]") {
 	REQUIRE(sys2.is_alive(e3));
 }
 
+TEST_CASE("System<> has_component()", "[system]") {
+	System system;
+	ComponentConfig cc;
+
+	Entity e1 = system.make(cc);
+	REQUIRE(system.has_component(e1, COMPONENT_ALIVE));
+	for (int i = 1; i != COMPONENT_ALIVE; i <<= 1) {
+		REQUIRE_FALSE(system.has_component(e1, i));
+	}
+
+	Entity e2 = system.make(cc);
+	REQUIRE(system.has_component(e1, COMPONENT_ALIVE));
+	REQUIRE(system.has_component(e2, COMPONENT_ALIVE));
+	for (int i = 1; i != COMPONENT_ALIVE; i <<= 1) {
+		REQUIRE_FALSE(system.has_component(e1, i));
+		REQUIRE_FALSE(system.has_component(e2, i));
+	}
+
+	system.erase(e1);
+	REQUIRE_FALSE(system.has_component(e1, COMPONENT_ALIVE));
+	REQUIRE(system.has_component(e2, COMPONENT_ALIVE));
+	for (int i = 1; i != COMPONENT_ALIVE; i <<= 1) {
+		REQUIRE_FALSE(system.has_component(e1, i));
+		REQUIRE_FALSE(system.has_component(e2, i));
+	}
+
+	Entity e3 = system.make(cc);
+	REQUIRE_FALSE(system.has_component(e1, COMPONENT_ALIVE));
+	REQUIRE(system.has_component(e2, COMPONENT_ALIVE));
+	REQUIRE(system.has_component(e3, COMPONENT_ALIVE));
+	for (int i = 1; i != COMPONENT_ALIVE; i <<= 1) {
+		REQUIRE_FALSE(system.has_component(e1, i));
+		REQUIRE_FALSE(system.has_component(e2, i));
+		REQUIRE_FALSE(system.has_component(e3, i));
+	}
+}
+
 // TEST_CASE("Entity dereferencing") {
 // 	System system;
 // 	ComponentConfig<int, std::string> cc;
