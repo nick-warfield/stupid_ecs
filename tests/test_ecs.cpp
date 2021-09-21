@@ -3,13 +3,12 @@
 #include "catch.hpp"
 #include "ecs.hpp"
 
-TEST_CASE("Component Config", "[component]") {
+TEST_CASE("Component Config Bitmask", "[component]") {
 	ComponentConfig<int, std::string, char> cc;
 	REQUIRE_FALSE(cc.get<COMPONENT_01_FLAG>().has_value());
 	REQUIRE_FALSE(cc.get<COMPONENT_02_FLAG>().has_value());
-	REQUIRE_FALSE(cc.get<4>().has_value());
+	REQUIRE_FALSE(cc.get<COMPONENT_03_FLAG>().has_value());
 	REQUIRE(cc.bitmask() == 0);
-
 
 	cc.component = 9;
 	REQUIRE(cc.bitmask() == (COMPONENT_01_FLAG));
@@ -20,21 +19,44 @@ TEST_CASE("Component Config", "[component]") {
 	cc.component = std::nullopt;
 	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_02_FLAG));
 	cc.component = 7;
+	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_02_FLAG | COMPONENT_01_FLAG));
+	cc.remainder.component = std::nullopt;
+	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_01_FLAG));
+	cc.remainder.remainder.component = std::nullopt;
+	REQUIRE(cc.bitmask() == (COMPONENT_01_FLAG));
+	cc.component = std::nullopt;
+	REQUIRE(cc.bitmask() == 0);
+}
 
+TEST_CASE("Component Config Setting Values", "[component]") {
+	ComponentConfig<int, std::string, char> cc;
+	REQUIRE(cc.get<COMPONENT_01_FLAG>() == cc.component);
+	REQUIRE(cc.get<COMPONENT_02_FLAG>() == cc.remainder.component);
+	REQUIRE(cc.get<COMPONENT_03_FLAG>() == cc.remainder.remainder.component);
 
-	REQUIRE(cc.get<COMPONENT_01_FLAG>().has_value());
+	cc.component = 7;
 	REQUIRE(cc.component == 7);
-	REQUIRE(cc.component == cc.get<1>());
-	REQUIRE(cc.component == cc.get<COMPONENT_01_FLAG>());
+	REQUIRE(cc.get<COMPONENT_01_FLAG>() == 7);
 
-	REQUIRE(cc.get<COMPONENT_02_FLAG>().has_value());
-	REQUIRE(cc.remainder.component == "word");
-	REQUIRE(cc.remainder.component == cc.get<2>());
-	REQUIRE(cc.remainder.component == cc.get<COMPONENT_02_FLAG>());
+	REQUIRE(cc.get<COMPONENT_01_FLAG>() == cc.component);
+	REQUIRE(cc.get<COMPONENT_02_FLAG>() == cc.remainder.component);
+	REQUIRE(cc.get<COMPONENT_03_FLAG>() == cc.remainder.remainder.component);
 
-	REQUIRE(cc.get<4>().has_value());
-	REQUIRE(cc.remainder.remainder.component == 'y');
-	REQUIRE(cc.remainder.remainder.component == cc.get<4>());
+	cc.component = std::nullopt;
+	REQUIRE_FALSE(cc.component.has_value());
+	REQUIRE_FALSE(cc.get<COMPONENT_01_FLAG>().has_value());
+
+	REQUIRE(cc.get<COMPONENT_01_FLAG>() == cc.component);
+	REQUIRE(cc.get<COMPONENT_02_FLAG>() == cc.remainder.component);
+	REQUIRE(cc.get<COMPONENT_03_FLAG>() == cc.remainder.remainder.component);
+
+	cc.get<COMPONENT_01_FLAG>() = 13;
+	REQUIRE(cc.component == 13);
+	REQUIRE(cc.get<COMPONENT_01_FLAG>() == 13);
+
+	REQUIRE(cc.get<COMPONENT_01_FLAG>() == cc.component);
+	REQUIRE(cc.get<COMPONENT_02_FLAG>() == cc.remainder.component);
+	REQUIRE(cc.get<COMPONENT_03_FLAG>() == cc.remainder.remainder.component);
 }
 
 // TEST_CASE("Entity dereferencing") {

@@ -34,7 +34,7 @@ struct ComponentConfig<T, R...> {
 	}
 
 	template <component_flag flag>
-	auto get() {
+	auto& get() {
 		return GetHelper<flag, ComponentConfig<T, R...>>::get(*this);
 	}
 
@@ -45,7 +45,7 @@ struct ComponentConfig<T, R...> {
 // 0 case -> nullopt (mostly to avoid crashes)
 template <typename T, typename... R>
 struct GetHelper<0, ComponentConfig<T, R...>> {
-	static auto get(ComponentConfig<T, R...>&) {
+	static auto& get(ComponentConfig<T, R...>&) {
 		return std::nullopt;
 	}
 };
@@ -53,7 +53,7 @@ struct GetHelper<0, ComponentConfig<T, R...>> {
 // 1 case -> what we looking for
 template <typename T, typename... R>
 struct GetHelper<1, ComponentConfig<T, R...>> {
-	static std::optional<T> get(ComponentConfig<T, R...>& cc) {
+	static std::optional<T>& get(ComponentConfig<T, R...>& cc) {
 		return cc.component;
 	}
 };
@@ -61,7 +61,7 @@ struct GetHelper<1, ComponentConfig<T, R...>> {
 // recursive case
 template <component_flag F, typename T, typename... R>
 struct GetHelper<F, ComponentConfig<T, R...>> {
-	static auto get(ComponentConfig<T, R...>& cc) {
+	static auto& get(ComponentConfig<T, R...>& cc) {
 		return GetHelper<(F >> 1), ComponentConfig<R...>>::get(cc.remainder);
 	}
 };
