@@ -180,6 +180,67 @@ TEST_CASE("System<T, ...R> Allocation", "[system]") {
 	REQUIRE(e4.index == 1);
 };
 
+TEST_CASE("System<> is_alive()", "[system]") {
+	System system;
+	ComponentConfig cc;
+
+	Entity e1 = system.make(cc);
+	REQUIRE(system.is_alive(e1));
+
+	Entity e2 = system.make(cc);
+	REQUIRE(system.is_alive(e1));
+	REQUIRE(system.is_alive(e2));
+
+	system.erase(e1);
+	REQUIRE_FALSE(system.is_alive(e1));
+	REQUIRE(system.is_alive(e2));
+
+	Entity e3 = system.make(cc);
+	REQUIRE_FALSE(system.is_alive(e1));
+	REQUIRE(system.is_alive(e2));
+	REQUIRE(system.is_alive(e3));
+}
+
+TEST_CASE("System<T, ...R> is_alive()", "[system]") {
+	System<int> sys1;
+	ComponentConfig<int> cc1;
+
+	Entity e1 = sys1.make(cc1);
+	REQUIRE(sys1.is_alive(e1));
+
+	Entity e2 = sys1.make(cc1);
+	REQUIRE(sys1.is_alive(e1));
+	REQUIRE(sys1.is_alive(e2));
+
+	sys1.erase(e1);
+	REQUIRE_FALSE(sys1.is_alive(e1));
+	REQUIRE(sys1.is_alive(e2));
+
+	Entity e3 = sys1.make(cc1);
+	REQUIRE_FALSE(sys1.is_alive(e1));
+	REQUIRE(sys1.is_alive(e2));
+	REQUIRE(sys1.is_alive(e3));
+
+	System<int, char, std::string, double> sys2;
+	ComponentConfig<int, char, std::string, double> cc2;
+
+	e1 = sys2.make(cc2);
+	REQUIRE(sys2.is_alive(e1));
+
+	e2 = sys2.make(cc2);
+	REQUIRE(sys2.is_alive(e1));
+	REQUIRE(sys2.is_alive(e2));
+
+	sys2.erase(e1);
+	REQUIRE_FALSE(sys2.is_alive(e1));
+	REQUIRE(sys2.is_alive(e2));
+
+	e3 = sys2.make(cc2);
+	REQUIRE_FALSE(sys2.is_alive(e1));
+	REQUIRE(sys2.is_alive(e2));
+	REQUIRE(sys2.is_alive(e3));
+}
+
 // TEST_CASE("Entity dereferencing") {
 // 	System system;
 // 	ComponentConfig<int, std::string> cc;
