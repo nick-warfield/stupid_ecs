@@ -30,16 +30,17 @@ class System<> {
 	std::vector<component_flag> m_component;
 
 public:
-	Entity make(ComponentConfig<>) {
+	Entity make(ComponentConfig<> cc) { return _make_helper(cc, cc.bitmask()); }
+	Entity _make_helper(ComponentConfig<>, const component_flag &flags) {
 		if (m_next_alloc.empty()) {
 			m_generation.push_back(0);
-			m_component.push_back(COMPONENT_ALIVE);
+			m_component.push_back(COMPONENT_ALIVE | flags);
 			return Entity(0, m_generation.size() - 1);
 		} else {
 			auto next = m_next_alloc.top();
 			m_next_alloc.pop();
 			m_generation[next]++;
-			m_component[next] = COMPONENT_ALIVE;
+			m_component[next] = COMPONENT_ALIVE | flags;
 			return Entity(m_generation[next], next);
 		}
 	}
@@ -49,14 +50,25 @@ public:
 		m_component[id.index] &= ~COMPONENT_ALIVE;
 		m_next_alloc.push(id.index);
 	}
+
+	bool is_alive(const Entity &id) {
+		return m_generation[id.index] == id.generation
+			&& m_component[id.index] & COMPONENT_ALIVE;
+	}
+
+	bool has_component(const Entity &id, const component_flag &flags) {
+		return m_generation[id.index] == id.generation
+			&& m_component[id.index] & flags;
+	}
 };
 
 
 template <typename T, typename ...R>
 class System<T, R...> {
 public:
-	Entity make(ComponentConfig<T, R...> cc) {
-		Entity e = m_tail.make(cc.remainder);
+	Entity make(ComponentConfig<T, R...> cc) { return _make_helper(cc, cc.bitmask()); }
+	Entity _make_helper(ComponentConfig<T, R...> cc, const component_flag &flags) {
+		Entity e = m_tail._make_helper(cc.remainder, flags);
 		if (e.index == m_data.size()) {
 			m_data.push_back(cc.component.value_or(T()));
 		} else {
@@ -68,8 +80,12 @@ public:
 		m_tail.erase(id);
 	}
 
-	bool is_alive(const Entity&);
-	bool has_component(const Entity&, component_flag);
+	bool is_alive(const Entity &id) {
+		return m_tail.is_alive(id);
+	}
+	bool has_component(const Entity& id, const component_flag& flags) {
+		return m_tail.has_component(id, flags);
+	}
 
 	struct Item {
 		std::optional<std::reference_wrapper<int>> data1;

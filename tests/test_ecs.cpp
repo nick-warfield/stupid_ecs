@@ -278,6 +278,65 @@ TEST_CASE("System<> has_component()", "[system]") {
 	}
 }
 
+TEST_CASE("System<T, ...R> has_component()", "[system]") {
+	System<int> sys1;
+	ComponentConfig<int> cc1;
+
+	Entity e1 = sys1.make(cc1);
+	REQUIRE(sys1.has_component(e1, COMPONENT_ALIVE));
+	REQUIRE_FALSE(sys1.has_component(e1, COMPONENT_01_FLAG));
+	for (int i = COMPONENT_02_FLAG; i != COMPONENT_ALIVE; i <<= 1) {
+		REQUIRE_FALSE(sys1.has_component(e1, i));
+	}
+
+	cc1.get<1>() = 7;
+	Entity e2 = sys1.make(cc1);
+	REQUIRE(sys1.has_component(e1, COMPONENT_ALIVE));
+	REQUIRE_FALSE(sys1.has_component(e1, COMPONENT_01_FLAG));
+	REQUIRE(sys1.has_component(e2, COMPONENT_ALIVE));
+	REQUIRE(sys1.has_component(e2, COMPONENT_01_FLAG));
+	for (int i = COMPONENT_02_FLAG; i != COMPONENT_ALIVE; i <<= 1) {
+		REQUIRE_FALSE(sys1.has_component(e1, i));
+		REQUIRE_FALSE(sys1.has_component(e2, i));
+	}
+
+	sys1.erase(e1);
+	REQUIRE_FALSE(sys1.has_component(e1, COMPONENT_ALIVE));
+	REQUIRE_FALSE(sys1.has_component(e1, COMPONENT_01_FLAG));
+	REQUIRE(sys1.has_component(e2, COMPONENT_ALIVE));
+	REQUIRE(sys1.has_component(e2, COMPONENT_01_FLAG));
+	for (int i = COMPONENT_02_FLAG; i != COMPONENT_ALIVE; i <<= 1) {
+		REQUIRE_FALSE(sys1.has_component(e1, i));
+		REQUIRE_FALSE(sys1.has_component(e2, i));
+	}
+
+	Entity e3 = sys1.make(cc1);
+	REQUIRE_FALSE(sys1.has_component(e1, COMPONENT_ALIVE));
+	REQUIRE_FALSE(sys1.has_component(e1, COMPONENT_01_FLAG));
+	REQUIRE(sys1.has_component(e2, COMPONENT_ALIVE));
+	REQUIRE(sys1.has_component(e2, COMPONENT_01_FLAG));
+	REQUIRE(sys1.has_component(e3, COMPONENT_ALIVE));
+	REQUIRE(sys1.has_component(e3, COMPONENT_01_FLAG));
+	for (int i = COMPONENT_02_FLAG; i != COMPONENT_ALIVE; i <<= 1) {
+		REQUIRE_FALSE(sys1.has_component(e1, i));
+		REQUIRE_FALSE(sys1.has_component(e2, i));
+		REQUIRE_FALSE(sys1.has_component(e3, i));
+	}
+
+	sys1.erase(e2);
+	REQUIRE_FALSE(sys1.has_component(e1, COMPONENT_ALIVE));
+	REQUIRE_FALSE(sys1.has_component(e1, COMPONENT_01_FLAG));
+	REQUIRE_FALSE(sys1.has_component(e2, COMPONENT_ALIVE));
+	REQUIRE(sys1.has_component(e2, COMPONENT_01_FLAG));
+	REQUIRE(sys1.has_component(e3, COMPONENT_ALIVE));
+	REQUIRE(sys1.has_component(e3, COMPONENT_01_FLAG));
+	for (int i = COMPONENT_02_FLAG; i != COMPONENT_ALIVE; i <<= 1) {
+		REQUIRE_FALSE(sys1.has_component(e1, i));
+		REQUIRE_FALSE(sys1.has_component(e2, i));
+		REQUIRE_FALSE(sys1.has_component(e3, i));
+	}
+}
+
 // TEST_CASE("Entity dereferencing") {
 // 	System system;
 // 	ComponentConfig<int, std::string> cc;
