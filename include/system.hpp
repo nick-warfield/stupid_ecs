@@ -6,15 +6,67 @@
 #include <memory>
 
 #include "component.hpp"
+#include "entity.hpp"
 
-struct Entity;
+struct Foo {
+	int a;
+
+	struct Bar {
+		Foo& foo;
+		int b;
+		int data() { return foo.a + b; }
+	};
+};
 
 // make this a recursive data structure
+template <typename ...T>
 class System {
+};
+
+template <>
+class System<> {
+	std::stack<std::size_t> m_next_alloc;
+	std::vector<std::size_t> m_generation;
+	std::vector<component_flag> m_component;
+
 public:
-	template <typename... T>
-	Entity make(ComponentConfig<T...>);
-	void erase(const Entity &);
+	Entity make(ComponentConfig<>) {
+		if (m_next_alloc.empty()) {
+			m_generation.push_back(0);
+			m_component.push_back(COMPONENT_ALIVE);
+			return Entity(0, m_generation.size() - 1);
+		} else {
+			auto next = m_next_alloc.top();
+			m_next_alloc.pop();
+			m_generation[next]++;
+			m_component[next] = COMPONENT_ALIVE;
+			return Entity(m_generation[next], next);
+		}
+	}
+
+	void erase(const Entity &id) {
+		if (m_generation[id.index] != id.generation) return;
+		m_component[id.index] &= ~COMPONENT_ALIVE;
+		m_next_alloc.push(id.index);
+	}
+};
+
+
+template <typename T, typename ...R>
+class System<T, R...> {
+public:
+	Entity make(ComponentConfig<T, R...> cc) {
+		Entity e = m_tail.make(cc.remainder);
+		if (e.index == m_data.size()) {
+			m_data.push_back(cc.component.value_or(T()));
+		} else {
+			m_data[e.index] = cc.component.value_or(T());
+		}
+		return e;
+	}
+	void erase(const Entity &id) {
+		m_tail.erase(id);
+	}
 
 	bool is_alive(const Entity&);
 	bool has_component(const Entity&, component_flag);
@@ -26,15 +78,6 @@ public:
 	std::optional<Item> get(const Entity &);
 
 private:
-	std::stack<std::size_t> m_next_alloc;
-	std::vector<std::size_t> m_generation;
-	std::vector<component_flag> m_component;
-
-	std::vector<int> m_data1;
-	std::vector<std::string> m_data2;
-
-	// vec<name>
-	// vec<position>
-	// vec<velocity>
-	// and so on, write a macro for this
+	std::vector<T> m_data;
+	System<R...> m_tail;
 };

@@ -59,6 +59,125 @@ TEST_CASE("Component Config Setting Values", "[component]") {
 	REQUIRE(cc.get<COMPONENT_03_FLAG>() == cc.remainder.remainder.component);
 }
 
+TEST_CASE("System Allocation") {
+	System sys1;
+	ComponentConfig cc1;
+
+	Entity e1 = sys1.make(cc1);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+
+	Entity e2 = sys1.make(cc1);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+
+	Entity e3 = sys1.make(cc1);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+
+	sys1.erase(e2);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+
+	Entity e4 = sys1.make(cc1);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+	REQUIRE(e4.generation == 1);
+	REQUIRE(e4.index == 1);
+
+	System<int> sys2;
+	ComponentConfig<int> cc2;
+
+	e1 = sys2.make(cc2);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+
+	e2 = sys2.make(cc2);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+
+	e3 = sys2.make(cc2);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+
+	sys2.erase(e2);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+
+	e4 = sys2.make(cc2);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+	REQUIRE(e4.generation == 1);
+	REQUIRE(e4.index == 1);
+
+	System<char, std::string, int, float, std::vector<std::size_t>> sys3;
+	ComponentConfig<char, std::string, int, float, std::vector<std::size_t>> cc3;
+
+	e1 = sys3.make(cc3);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+
+	e2 = sys3.make(cc3);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+
+	e3 = sys3.make(cc3);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+
+	sys3.erase(e2);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+
+	e4 = sys3.make(cc3);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+	REQUIRE(e4.generation == 1);
+	REQUIRE(e4.index == 1);
+};
+
 // TEST_CASE("Entity dereferencing") {
 // 	System system;
 // 	ComponentConfig<int, std::string> cc;
