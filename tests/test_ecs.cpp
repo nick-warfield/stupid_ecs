@@ -59,9 +59,50 @@ TEST_CASE("Component Config Setting Values", "[component]") {
 	REQUIRE(cc.get<COMPONENT_03_FLAG>() == cc.remainder.remainder.component);
 }
 
-TEST_CASE("System Allocation") {
-	System sys1;
-	ComponentConfig cc1;
+TEST_CASE("System<> Allocation", "[system]") {
+	System system;
+	ComponentConfig cc;
+
+	Entity e1 = system.make(cc);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+
+	Entity e2 = system.make(cc);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+
+	Entity e3 = system.make(cc);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+
+	system.erase(e2);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+
+	Entity e4 = system.make(cc);
+	REQUIRE(e1.generation == 0);
+	REQUIRE(e1.index == 0);
+	REQUIRE(e2.generation == 0);
+	REQUIRE(e2.index == 1);
+	REQUIRE(e3.generation == 0);
+	REQUIRE(e3.index == 2);
+	REQUIRE(e4.generation == 1);
+	REQUIRE(e4.index == 1);
+};
+
+TEST_CASE("System<T, ...R> Allocation", "[system]") {
+	System<int> sys1;
+	ComponentConfig<int> cc1;
 
 	Entity e1 = sys1.make(cc1);
 	REQUIRE(e1.generation == 0);
@@ -99,8 +140,8 @@ TEST_CASE("System Allocation") {
 	REQUIRE(e4.generation == 1);
 	REQUIRE(e4.index == 1);
 
-	System<int> sys2;
-	ComponentConfig<int> cc2;
+	System<char, std::string, int, float, std::vector<std::size_t>> sys2;
+	ComponentConfig<char, std::string, int, float, std::vector<std::size_t>> cc2;
 
 	e1 = sys2.make(cc2);
 	REQUIRE(e1.generation == 0);
@@ -129,45 +170,6 @@ TEST_CASE("System Allocation") {
 	REQUIRE(e3.index == 2);
 
 	e4 = sys2.make(cc2);
-	REQUIRE(e1.generation == 0);
-	REQUIRE(e1.index == 0);
-	REQUIRE(e2.generation == 0);
-	REQUIRE(e2.index == 1);
-	REQUIRE(e3.generation == 0);
-	REQUIRE(e3.index == 2);
-	REQUIRE(e4.generation == 1);
-	REQUIRE(e4.index == 1);
-
-	System<char, std::string, int, float, std::vector<std::size_t>> sys3;
-	ComponentConfig<char, std::string, int, float, std::vector<std::size_t>> cc3;
-
-	e1 = sys3.make(cc3);
-	REQUIRE(e1.generation == 0);
-	REQUIRE(e1.index == 0);
-
-	e2 = sys3.make(cc3);
-	REQUIRE(e1.generation == 0);
-	REQUIRE(e1.index == 0);
-	REQUIRE(e2.generation == 0);
-	REQUIRE(e2.index == 1);
-
-	e3 = sys3.make(cc3);
-	REQUIRE(e1.generation == 0);
-	REQUIRE(e1.index == 0);
-	REQUIRE(e2.generation == 0);
-	REQUIRE(e2.index == 1);
-	REQUIRE(e3.generation == 0);
-	REQUIRE(e3.index == 2);
-
-	sys3.erase(e2);
-	REQUIRE(e1.generation == 0);
-	REQUIRE(e1.index == 0);
-	REQUIRE(e2.generation == 0);
-	REQUIRE(e2.index == 1);
-	REQUIRE(e3.generation == 0);
-	REQUIRE(e3.index == 2);
-
-	e4 = sys3.make(cc3);
 	REQUIRE(e1.generation == 0);
 	REQUIRE(e1.index == 0);
 	REQUIRE(e2.generation == 0);
