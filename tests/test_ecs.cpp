@@ -337,6 +337,58 @@ TEST_CASE("System<T, ...R> has_component()", "[system]") {
 	}
 }
 
+TEST_CASE("System<> get", "[system]") {
+	System sys;
+	ComponentConfig cc;
+	Entity e = sys.make(cc);
+	REQUIRE(sys.get(e).has_value());
+	sys.erase(e);
+	REQUIRE_FALSE(sys.get(e).has_value());
+}
+
+TEST_CASE("System<T, R...> get", "[system]") {
+	System<int, std::string, char> sys;
+	ComponentConfig<int, std::string, char> cc;
+	Entity e1 = sys.make(cc);
+	REQUIRE(sys.get(e1).has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_01_FLAG>().has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_02_FLAG>().has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_03_FLAG>().has_value());
+
+	cc.get<COMPONENT_01_FLAG>() = 13;
+	cc.get<COMPONENT_02_FLAG>() = "beer & pizza";
+	Entity e2 = sys.make(cc);
+	REQUIRE(sys.get(e1).has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_01_FLAG>().has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_02_FLAG>().has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_03_FLAG>().has_value());
+	REQUIRE(sys.get(e2).has_value());
+	REQUIRE(sys.get(e2)->get<COMPONENT_01_FLAG>() == 13);
+	REQUIRE(sys.get(e2)->get<COMPONENT_02_FLAG>()->get() == "beer & pizza");
+	REQUIRE_FALSE(sys.get(e2)->get<COMPONENT_03_FLAG>().has_value());
+	
+	sys.get(e2)->get<COMPONENT_01_FLAG>()->get() = 5;
+	REQUIRE(sys.get(e2)->get<COMPONENT_01_FLAG>() == 5);
+	REQUIRE(sys.get(e2)->get<COMPONENT_02_FLAG>()->get() == "beer & pizza");
+	REQUIRE_FALSE(sys.get(e2)->get<COMPONENT_03_FLAG>().has_value());
+
+	sys.get(e2)->get<COMPONENT_02_FLAG>()->get() = "chips & salsa";
+	REQUIRE(sys.get(e2)->get<COMPONENT_01_FLAG>() == 5);
+	REQUIRE(sys.get(e2)->get<COMPONENT_02_FLAG>()->get() == "chips & salsa");
+	REQUIRE_FALSE(sys.get(e2)->get<COMPONENT_03_FLAG>().has_value());
+
+	cc.get<COMPONENT_02_FLAG>() = std::nullopt;
+	cc.get<COMPONENT_03_FLAG>() = 'f';
+	sys.erase(e1);
+	Entity e3 = sys.make(cc);
+	REQUIRE_FALSE(sys.get(e1).has_value());
+	REQUIRE(sys.get(e2)->get<COMPONENT_01_FLAG>() == 5);
+	REQUIRE(sys.get(e2)->get<COMPONENT_02_FLAG>()->get() == "chips & salsa");
+	REQUIRE(sys.get(e3)->get<COMPONENT_01_FLAG>() == 13);
+	REQUIRE_FALSE(sys.get(e3)->get<COMPONENT_02_FLAG>().has_value());
+	REQUIRE(sys.get(e3)->get<COMPONENT_03_FLAG>() == 'f');
+}
+
 // TEST_CASE("Entity dereferencing") {
 // 	System system;
 // 	ComponentConfig<int, std::string> cc;
