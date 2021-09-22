@@ -8,16 +8,6 @@
 #include "component.hpp"
 #include "entity.hpp"
 
-struct Foo {
-	int a;
-
-	struct Bar {
-		Foo& foo;
-		int b;
-		int data() { return foo.a + b; }
-	};
-};
-
 // make this a recursive data structure
 template <typename ...T>
 class System {
