@@ -28,6 +28,14 @@ struct ComponentConfig<T, R...> {
 		component(std::nullopt),
 		remainder() { }
 
+	ComponentConfig(const ComponentConfig<T, R...> &other)
+		: component(other.component),
+		remainder(other.remainder) { }
+
+	ComponentConfig(std::optional<T> value, const ComponentConfig<R...> &other)
+		: component(value),
+		remainder(other) { }
+
 	component_flag bitmask() {
 		return component.has_value()
 			| (remainder.bitmask() << 1);

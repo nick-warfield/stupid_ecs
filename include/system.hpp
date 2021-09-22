@@ -50,6 +50,23 @@ public:
 		m_component[id.index] &= ~COMPONENT_ALIVE;
 		m_next_alloc.push(id.index);
 	}
+	
+	auto get(const Entity &id) {
+		return _get_helper(id, 0);
+	}
+	std::optional<ComponentConfig<>> _get_helper(
+			const Entity &id,
+			component_flag) {
+		if (is_alive(id)) {
+			return ComponentConfig();
+		} else {
+			return {};
+		}
+	}
+
+	component_flag get_bits(const Entity &id) {
+		return m_component[id.index];
+	}
 
 	bool is_alive(const Entity &id) {
 		return m_generation[id.index] == id.generation
@@ -87,11 +104,32 @@ public:
 		return m_tail.has_component(id, flags);
 	}
 
-	struct Item {
-		std::optional<std::reference_wrapper<int>> data1;
-		std::optional<std::reference_wrapper<std::string>> data2;
-	};
-	std::optional<Item> get(const Entity &);
+	std::optional<ComponentConfig<
+		std::reference_wrapper<T>,
+		std::reference_wrapper<R>...>>
+	get(const Entity &id) {
+		if (!is_alive(id)) return std::nullopt;
+		return _get_helper(id, get_bits(id));
+	}
+	std::optional<ComponentConfig<
+		std::reference_wrapper<T>,
+		std::reference_wrapper<R>...>>
+	_get_helper(const Entity &id, component_flag bits) {
+		auto value = bits & 1
+			? std::optional(std::ref(m_data[id.index]))
+			: std::nullopt;
+		auto tail = m_tail._get_helper(id, bits >> 1);
+
+		ComponentConfig<
+			std::reference_wrapper<T>,
+			std::reference_wrapper<R>...>
+		cc(value, tail.value());
+		return cc;
+	}
+
+	component_flag get_bits(const Entity &id) {
+		return m_tail.get_bits(id);
+	}
 
 private:
 	std::vector<T> m_data;
