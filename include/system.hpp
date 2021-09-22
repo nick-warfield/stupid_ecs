@@ -8,7 +8,10 @@
 #include "component.hpp"
 #include "entity.hpp"
 
-// make this a recursive data structure
+template<typename ...T>
+using Item = ComponentConfig<
+	std::reference_wrapper<T>...>;
+
 template <typename ...T>
 class System {
 };
@@ -41,10 +44,10 @@ public:
 		m_next_alloc.push(id.index);
 	}
 	
-	auto get(const Entity &id) {
+	std::optional<Item<>> get(const Entity &id) {
 		return _get_helper(id, 0);
 	}
-	std::optional<ComponentConfig<>> _get_helper(
+	std::optional<Item<>> _get_helper(
 			const Entity &id,
 			component_flag) {
 		if (is_alive(id)) {
@@ -68,7 +71,6 @@ public:
 			&& m_component[id.index] & flags;
 	}
 };
-
 
 template <typename T, typename ...R>
 class System<T, R...> {
@@ -94,16 +96,12 @@ public:
 		return m_tail.has_component(id, flags);
 	}
 
-	std::optional<ComponentConfig<
-		std::reference_wrapper<T>,
-		std::reference_wrapper<R>...>>
+	std::optional<Item<T, R...>>
 	get(const Entity &id) {
 		if (!is_alive(id)) return std::nullopt;
 		return _get_helper(id, get_bits(id));
 	}
-	std::optional<ComponentConfig<
-		std::reference_wrapper<T>,
-		std::reference_wrapper<R>...>>
+	std::optional<Item<T, R...>>
 	_get_helper(const Entity &id, component_flag bits) {
 		auto value = bits & 1
 			? std::optional(std::ref(m_data[id.index]))

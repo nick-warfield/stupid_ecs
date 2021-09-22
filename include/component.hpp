@@ -1,9 +1,5 @@
 #pragma once
 
-// Component could also be a recursive struct
-// for the getter, it could be get<component_flag>()
-// where we bitshift each step
-
 #include <fstream>
 #include <optional>
 #include <iostream>
