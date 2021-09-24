@@ -10,10 +10,10 @@ const component_flag COMPONENT_01_FLAG = 0b0000000000000001;
 const component_flag COMPONENT_02_FLAG = 0b0000000000000010;
 const component_flag COMPONENT_03_FLAG = 0b0000000000000100;
 
-template<component_flag F, typename T>
-struct GetHelper;
+template<uint I, typename T>
+struct GetIndex;
 
-template<typename T, typename U>
+template<typename A, typename T>
 struct GetType;
 
 template<typename... T>
@@ -40,9 +40,9 @@ struct ComponentConfig<T, R...> {
 			| (remainder.bitmask() << 1);
 	}
 
-	template <component_flag flag>
+	template <uint Index>
 	auto& get() {
-		return GetHelper<flag, ComponentConfig<T, R...>>::get(*this);
+		return GetIndex<Index, ComponentConfig<T, R...>>::get(*this);
 	}
 
 	template <typename Type>
@@ -54,27 +54,19 @@ struct ComponentConfig<T, R...> {
 	ComponentConfig<R...> remainder;
 };
 
-// 0 case -> nullopt (mostly to avoid crashes)
-template <typename T, typename... R>
-struct GetHelper<0, ComponentConfig<T, R...>> {
-	static auto& get(ComponentConfig<T, R...>&) {
-		return std::nullopt;
-	}
-};
-
-// 1 case -> what we looking for
-template <typename T, typename... R>
-struct GetHelper<1, ComponentConfig<T, R...>> {
-	static std::optional<T>& get(ComponentConfig<T, R...>& cc) {
+// 0 case -> what we looking for
+template <typename Head, typename... Tail>
+struct GetIndex<0, ComponentConfig<Head, Tail...>> {
+	static std::optional<Head>& get(ComponentConfig<Head, Tail...>& cc) {
 		return cc.component;
 	}
 };
 
 // recursive case
-template <component_flag F, typename T, typename... R>
-struct GetHelper<F, ComponentConfig<T, R...>> {
-	static auto& get(ComponentConfig<T, R...>& cc) {
-		return GetHelper<(F >> 1), ComponentConfig<R...>>::get(cc.remainder);
+template <uint Index, typename Head, typename... Tail>
+struct GetIndex<Index, ComponentConfig<Head, Tail...>> {
+	static auto& get(ComponentConfig<Head, Tail...>& cc) {
+		return GetIndex<Index - 1, ComponentConfig<Tail...>>::get(cc.remainder);
 	}
 };
 

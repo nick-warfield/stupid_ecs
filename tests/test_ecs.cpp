@@ -5,9 +5,9 @@
 
 TEST_CASE("Component Config Bitmask", "[component]") {
 	ComponentConfig<int, std::string, char> cc;
-	REQUIRE_FALSE(cc.get<COMPONENT_01_FLAG>().has_value());
-	REQUIRE_FALSE(cc.get<COMPONENT_02_FLAG>().has_value());
-	REQUIRE_FALSE(cc.get<COMPONENT_03_FLAG>().has_value());
+	REQUIRE_FALSE(cc.get<int>().has_value());
+	REQUIRE_FALSE(cc.get<std::string>().has_value());
+	REQUIRE_FALSE(cc.get<char>().has_value());
 	REQUIRE(cc.bitmask() == 0);
 
 	cc.component = 9;
@@ -30,33 +30,33 @@ TEST_CASE("Component Config Bitmask", "[component]") {
 
 TEST_CASE("Component Config Setting Values", "[component]") {
 	ComponentConfig<int, std::string, char> cc;
-	REQUIRE(cc.get<COMPONENT_01_FLAG>() == cc.component);
-	REQUIRE(cc.get<COMPONENT_02_FLAG>() == cc.remainder.component);
-	REQUIRE(cc.get<COMPONENT_03_FLAG>() == cc.remainder.remainder.component);
+	REQUIRE(cc.get<int>() == cc.component);
+	REQUIRE(cc.get<std::string>() == cc.remainder.component);
+	REQUIRE(cc.get<char>() == cc.remainder.remainder.component);
 
 	cc.component = 7;
 	REQUIRE(cc.component == 7);
-	REQUIRE(cc.get<COMPONENT_01_FLAG>() == 7);
+	REQUIRE(cc.get<int>() == 7);
 
-	REQUIRE(cc.get<COMPONENT_01_FLAG>() == cc.component);
-	REQUIRE(cc.get<COMPONENT_02_FLAG>() == cc.remainder.component);
-	REQUIRE(cc.get<COMPONENT_03_FLAG>() == cc.remainder.remainder.component);
+	REQUIRE(cc.get<int>() == cc.component);
+	REQUIRE(cc.get<std::string>() == cc.remainder.component);
+	REQUIRE(cc.get<char>() == cc.remainder.remainder.component);
 
 	cc.component = std::nullopt;
 	REQUIRE_FALSE(cc.component.has_value());
-	REQUIRE_FALSE(cc.get<COMPONENT_01_FLAG>().has_value());
+	REQUIRE_FALSE(cc.get<int>().has_value());
 
-	REQUIRE(cc.get<COMPONENT_01_FLAG>() == cc.component);
-	REQUIRE(cc.get<COMPONENT_02_FLAG>() == cc.remainder.component);
-	REQUIRE(cc.get<COMPONENT_03_FLAG>() == cc.remainder.remainder.component);
+	REQUIRE(cc.get<int>() == cc.component);
+	REQUIRE(cc.get<std::string>() == cc.remainder.component);
+	REQUIRE(cc.get<char>() == cc.remainder.remainder.component);
 
-	cc.get<COMPONENT_01_FLAG>() = 13;
+	cc.get<int>() = 13;
 	REQUIRE(cc.component == 13);
-	REQUIRE(cc.get<COMPONENT_01_FLAG>() == 13);
+	REQUIRE(cc.get<int>() == 13);
 
-	REQUIRE(cc.get<COMPONENT_01_FLAG>() == cc.component);
-	REQUIRE(cc.get<COMPONENT_02_FLAG>() == cc.remainder.component);
-	REQUIRE(cc.get<COMPONENT_03_FLAG>() == cc.remainder.remainder.component);
+	REQUIRE(cc.get<int>() == cc.component);
+	REQUIRE(cc.get<std::string>() == cc.remainder.component);
+	REQUIRE(cc.get<char>() == cc.remainder.remainder.component);
 }
 
 TEST_CASE("System<> Allocation", "[system]") {
@@ -289,7 +289,7 @@ TEST_CASE("System<T, ...R> has_component()", "[system]") {
 		REQUIRE_FALSE(sys1.has_component(e1, i));
 	}
 
-	cc1.get<1>() = 7;
+	cc1.get<0>() = 7;
 	Entity e2 = sys1.make(cc1);
 	REQUIRE(sys1.has_component(e1, COMPONENT_ALIVE));
 	REQUIRE_FALSE(sys1.has_component(e1, COMPONENT_01_FLAG));
@@ -351,41 +351,41 @@ TEST_CASE("System<T, R...> get", "[system]") {
 	ComponentConfig<int, std::string, char> cc;
 	Entity e1 = sys.make(cc);
 	REQUIRE(sys.get(e1).has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_01_FLAG>().has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_02_FLAG>().has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_03_FLAG>().has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<0>().has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<1>().has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<2>().has_value());
 
-	cc.get<COMPONENT_01_FLAG>() = 13;
-	cc.get<COMPONENT_02_FLAG>() = "beer & pizza";
+	cc.get<int>() = 13;
+	cc.get<std::string>() = "beer & pizza";
 	Entity e2 = sys.make(cc);
 	REQUIRE(sys.get(e1).has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_01_FLAG>().has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_02_FLAG>().has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<COMPONENT_03_FLAG>().has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<0>().has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<1>().has_value());
+	REQUIRE_FALSE(sys.get(e1)->get<2>().has_value());
 	REQUIRE(sys.get(e2).has_value());
-	REQUIRE(sys.get(e2)->get<COMPONENT_01_FLAG>() == 13);
-	REQUIRE(sys.get(e2)->get<COMPONENT_02_FLAG>()->get() == "beer & pizza");
-	REQUIRE_FALSE(sys.get(e2)->get<COMPONENT_03_FLAG>().has_value());
+	REQUIRE(sys.get(e2)->get<0>() == 13);
+	REQUIRE(sys.get(e2)->get<1>()->get() == "beer & pizza");
+	REQUIRE_FALSE(sys.get(e2)->get<2>().has_value());
 	
-	sys.get(e2)->get<COMPONENT_01_FLAG>()->get() = 5;
-	REQUIRE(sys.get(e2)->get<COMPONENT_01_FLAG>() == 5);
-	REQUIRE(sys.get(e2)->get<COMPONENT_02_FLAG>()->get() == "beer & pizza");
-	REQUIRE_FALSE(sys.get(e2)->get<COMPONENT_03_FLAG>().has_value());
+	sys.get(e2)->get<0>()->get() = 5;
+	REQUIRE(sys.get(e2)->get<0>() == 5);
+	REQUIRE(sys.get(e2)->get<1>()->get() == "beer & pizza");
+	REQUIRE_FALSE(sys.get(e2)->get<2>().has_value());
 
-	sys.get(e2)->get<COMPONENT_02_FLAG>()->get() = "chips & salsa";
-	REQUIRE(sys.get(e2)->get<COMPONENT_01_FLAG>() == 5);
-	REQUIRE(sys.get(e2)->get<COMPONENT_02_FLAG>()->get() == "chips & salsa");
-	REQUIRE_FALSE(sys.get(e2)->get<COMPONENT_03_FLAG>().has_value());
+	sys.get(e2)->get<1>()->get() = "chips & salsa";
+	REQUIRE(sys.get(e2)->get<0>() == 5);
+	REQUIRE(sys.get(e2)->get<1>()->get() == "chips & salsa");
+	REQUIRE_FALSE(sys.get(e2)->get<2>().has_value());
 
-	cc.get<COMPONENT_02_FLAG>() = std::nullopt;
-	cc.get<COMPONENT_03_FLAG>() = 'f';
+	cc.get<1>() = std::nullopt;
+	cc.get<2>() = 'f';
 	sys.erase(e1);
 	Entity e3 = sys.make(cc);
 	REQUIRE_FALSE(sys.get(e1).has_value());
-	REQUIRE(sys.get(e2)->get<COMPONENT_01_FLAG>() == 5);
-	REQUIRE(sys.get(e2)->get<COMPONENT_02_FLAG>()->get() == "chips & salsa");
-	REQUIRE(sys.get(e3)->get<COMPONENT_01_FLAG>() == 13);
-	REQUIRE_FALSE(sys.get(e3)->get<COMPONENT_02_FLAG>().has_value());
-	REQUIRE(sys.get(e3)->get<COMPONENT_03_FLAG>() == 'f');
+	REQUIRE(sys.get(e2)->get<0>() == 5);
+	REQUIRE(sys.get(e2)->get<1>()->get() == "chips & salsa");
+	REQUIRE(sys.get(e3)->get<0>() == 13);
+	REQUIRE_FALSE(sys.get(e3)->get<1>().has_value());
+	REQUIRE(sys.get(e3)->get<2>() == 'f');
 }
 
