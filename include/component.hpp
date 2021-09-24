@@ -13,6 +13,9 @@ const component_flag COMPONENT_03_FLAG = 0b0000000000000100;
 template<component_flag F, typename T>
 struct GetHelper;
 
+template<typename T, typename U>
+struct GetType;
+
 template<typename... T>
 struct ComponentConfig {
 	component_flag bitmask() { return 0; }
@@ -42,6 +45,11 @@ struct ComponentConfig<T, R...> {
 		return GetHelper<flag, ComponentConfig<T, R...>>::get(*this);
 	}
 
+	template <typename Type>
+	auto& get() {
+		return GetType<Type, ComponentConfig<T, R...>>::get(*this);
+	}
+
 	std::optional<T> component;
 	ComponentConfig<R...> remainder;
 };
@@ -67,5 +75,19 @@ template <component_flag F, typename T, typename... R>
 struct GetHelper<F, ComponentConfig<T, R...>> {
 	static auto& get(ComponentConfig<T, R...>& cc) {
 		return GetHelper<(F >> 1), ComponentConfig<R...>>::get(cc.remainder);
+	}
+};
+
+template <typename Head, typename... Tail>
+struct GetType<Head, ComponentConfig<Head, Tail...>> {
+	static std::optional<Head>& get(ComponentConfig<Head, Tail...>& cc) {
+		return cc.component;
+	}
+};
+
+template <typename Type, typename Head, typename... Tail>
+struct GetType<Type, ComponentConfig<Head, Tail...>> {
+	static auto& get(ComponentConfig<Head, Tail...>& cc) {
+		return GetType<Type, ComponentConfig<Tail...>>::get(cc.remainder);
 	}
 };
