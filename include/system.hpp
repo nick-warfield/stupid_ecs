@@ -13,8 +13,7 @@ using Item = ComponentConfig<
 	std::reference_wrapper<T>...>;
 
 template <typename ...T>
-class System {
-};
+class System { };
 
 template <>
 class System<> {
@@ -45,12 +44,14 @@ public:
 	}
 	
 	std::optional<Item<>> get(const Entity &id) {
-		return _get_helper(id, 0);
+		component_flag bits = 0;
+		return _get_helper(id, bits);
 	}
 	std::optional<Item<>> _get_helper(
 			const Entity &id,
-			component_flag) {
+			component_flag &bits) {
 		if (is_alive(id)) {
+			bits = m_component[id.index];
 			return ComponentConfig();
 		} else {
 			return {};
@@ -75,9 +76,13 @@ public:
 template <typename T, typename ...R>
 class System<T, R...> {
 public:
-	Entity make(ComponentConfig<T, R...> cc) { return _make_helper(cc, cc.bitmask()); }
+	Entity make(ComponentConfig<T, R...> cc) {
+		component_flag b = 0;
+		return _make_helper(cc, b);
+	}
 	Entity _make_helper(ComponentConfig<T, R...> cc, const component_flag &flags) {
-		Entity e = m_tail._make_helper(cc.tail, flags);
+		auto f = (flags << 1) | cc.item.has_value();
+		Entity e = m_tail._make_helper(cc.tail, f);
 		if (e.index == m_data.size()) {
 			m_data.push_back(cc.item.value_or(T()));
 		} else {
@@ -99,14 +104,16 @@ public:
 	std::optional<Item<T, R...>>
 	get(const Entity &id) {
 		if (!is_alive(id)) return std::nullopt;
-		return _get_helper(id, get_bits(id));
+		component_flag bits = 0;
+		return _get_helper(id, bits);
 	}
 	std::optional<Item<T, R...>>
-	_get_helper(const Entity &id, component_flag bits) {
+	_get_helper(const Entity &id, component_flag &bits) {
+		auto tail = m_tail._get_helper(id, bits);
 		auto value = bits & 1
 			? std::optional(std::ref(m_data[id.index]))
 			: std::nullopt;
-		auto tail = m_tail._get_helper(id, bits >> 1);
+		bits >>= 1;
 
 		ComponentConfig<
 			std::reference_wrapper<T>,
