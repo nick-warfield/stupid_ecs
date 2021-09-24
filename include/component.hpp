@@ -17,9 +17,7 @@ template<typename A, typename T>
 struct GetType;
 
 template<typename...>
-struct ComponentConfig {
-	component_flag bitmask() { return 0; }
-};
+struct ComponentConfig { };
 
 template<typename T, typename... R>
 struct ComponentConfig<T, R...> {
@@ -34,11 +32,6 @@ struct ComponentConfig<T, R...> {
 	ComponentConfig(std::optional<T> value, const ComponentConfig<R...> &other)
 		: item(value),
 		tail(other) { }
-
-	component_flag bitmask() {
-		return item.has_value()
-			| (tail.bitmask() << 1);
-	}
 
 	template <uint Index>
 	auto& get() {

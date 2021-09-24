@@ -22,7 +22,7 @@ class System<> {
 	std::vector<component_flag> m_component;
 
 public:
-	Entity make(ComponentConfig<> cc) { return _make_helper(cc, cc.bitmask()); }
+	Entity make(ComponentConfig<> cc) { return _make_helper(cc, 0); }
 	Entity _make_helper(ComponentConfig<>, const component_flag &flags) {
 		if (m_next_alloc.empty()) {
 			m_generation.push_back(0);

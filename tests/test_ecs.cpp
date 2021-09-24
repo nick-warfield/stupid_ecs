@@ -3,31 +3,6 @@
 #include "catch.hpp"
 #include "ecs.hpp"
 
-TEST_CASE("Component Config Bitmask", "[component]") {
-	ComponentConfig<int, std::string, char> cc;
-	REQUIRE_FALSE(cc.get<int>().has_value());
-	REQUIRE_FALSE(cc.get<std::string>().has_value());
-	REQUIRE_FALSE(cc.get<char>().has_value());
-	REQUIRE(cc.bitmask() == 0);
-
-	cc.item = 9;
-	REQUIRE(cc.bitmask() == (COMPONENT_01_FLAG));
-	cc.tail.tail.item = 'y';
-	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_01_FLAG));
-	cc.tail.item = "word";
-	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_02_FLAG | COMPONENT_01_FLAG));
-	cc.item = std::nullopt;
-	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_02_FLAG));
-	cc.item = 7;
-	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_02_FLAG | COMPONENT_01_FLAG));
-	cc.tail.item = std::nullopt;
-	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_01_FLAG));
-	cc.tail.tail.item = std::nullopt;
-	REQUIRE(cc.bitmask() == (COMPONENT_01_FLAG));
-	cc.item = std::nullopt;
-	REQUIRE(cc.bitmask() == 0);
-}
-
 TEST_CASE("item Config Setting Values", "[item]") {
 	ComponentConfig<int, std::string, char> cc;
 	REQUIRE(cc.get<int>() == cc.item);
