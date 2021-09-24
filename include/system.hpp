@@ -66,11 +66,6 @@ public:
 		return m_generation[id.index] == id.generation
 			&& m_component[id.index] & COMPONENT_ALIVE;
 	}
-
-	bool has_component(const Entity &id, const component_flag &flags) {
-		return m_generation[id.index] == id.generation
-			&& m_component[id.index] & flags;
-	}
 };
 
 template <typename T, typename ...R>
@@ -97,9 +92,6 @@ public:
 	bool is_alive(const Entity &id) {
 		return m_tail.is_alive(id);
 	}
-	bool has_component(const Entity& id, const component_flag& flags) {
-		return m_tail.has_component(id, flags);
-	}
 
 	std::optional<Item<T, R...>>
 	get(const Entity &id) {
@@ -120,10 +112,6 @@ public:
 			std::reference_wrapper<R>...>
 		cc(value, tail.value());
 		return cc;
-	}
-
-	component_flag get_bits(const Entity &id) {
-		return m_tail.get_bits(id);
 	}
 
 private:
