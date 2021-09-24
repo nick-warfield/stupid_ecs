@@ -77,11 +77,11 @@ class System<T, R...> {
 public:
 	Entity make(ComponentConfig<T, R...> cc) { return _make_helper(cc, cc.bitmask()); }
 	Entity _make_helper(ComponentConfig<T, R...> cc, const component_flag &flags) {
-		Entity e = m_tail._make_helper(cc.remainder, flags);
+		Entity e = m_tail._make_helper(cc.tail, flags);
 		if (e.index == m_data.size()) {
-			m_data.push_back(cc.component.value_or(T()));
+			m_data.push_back(cc.item.value_or(T()));
 		} else {
-			m_data[e.index] = cc.component.value_or(T());
+			m_data[e.index] = cc.item.value_or(T());
 		}
 		return e;
 	}

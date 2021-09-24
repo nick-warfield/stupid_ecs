@@ -10,53 +10,53 @@ TEST_CASE("Component Config Bitmask", "[component]") {
 	REQUIRE_FALSE(cc.get<char>().has_value());
 	REQUIRE(cc.bitmask() == 0);
 
-	cc.component = 9;
+	cc.item = 9;
 	REQUIRE(cc.bitmask() == (COMPONENT_01_FLAG));
-	cc.remainder.remainder.component = 'y';
+	cc.tail.tail.item = 'y';
 	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_01_FLAG));
-	cc.remainder.component = "word";
+	cc.tail.item = "word";
 	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_02_FLAG | COMPONENT_01_FLAG));
-	cc.component = std::nullopt;
+	cc.item = std::nullopt;
 	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_02_FLAG));
-	cc.component = 7;
+	cc.item = 7;
 	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_02_FLAG | COMPONENT_01_FLAG));
-	cc.remainder.component = std::nullopt;
+	cc.tail.item = std::nullopt;
 	REQUIRE(cc.bitmask() == (COMPONENT_03_FLAG | COMPONENT_01_FLAG));
-	cc.remainder.remainder.component = std::nullopt;
+	cc.tail.tail.item = std::nullopt;
 	REQUIRE(cc.bitmask() == (COMPONENT_01_FLAG));
-	cc.component = std::nullopt;
+	cc.item = std::nullopt;
 	REQUIRE(cc.bitmask() == 0);
 }
 
-TEST_CASE("Component Config Setting Values", "[component]") {
+TEST_CASE("item Config Setting Values", "[item]") {
 	ComponentConfig<int, std::string, char> cc;
-	REQUIRE(cc.get<int>() == cc.component);
-	REQUIRE(cc.get<std::string>() == cc.remainder.component);
-	REQUIRE(cc.get<char>() == cc.remainder.remainder.component);
+	REQUIRE(cc.get<int>() == cc.item);
+	REQUIRE(cc.get<std::string>() == cc.tail.item);
+	REQUIRE(cc.get<char>() == cc.tail.tail.item);
 
-	cc.component = 7;
-	REQUIRE(cc.component == 7);
+	cc.item = 7;
+	REQUIRE(cc.item == 7);
 	REQUIRE(cc.get<int>() == 7);
 
-	REQUIRE(cc.get<int>() == cc.component);
-	REQUIRE(cc.get<std::string>() == cc.remainder.component);
-	REQUIRE(cc.get<char>() == cc.remainder.remainder.component);
+	REQUIRE(cc.get<int>() == cc.item);
+	REQUIRE(cc.get<std::string>() == cc.tail.item);
+	REQUIRE(cc.get<char>() == cc.tail.tail.item);
 
-	cc.component = std::nullopt;
-	REQUIRE_FALSE(cc.component.has_value());
+	cc.item = std::nullopt;
+	REQUIRE_FALSE(cc.item.has_value());
 	REQUIRE_FALSE(cc.get<int>().has_value());
 
-	REQUIRE(cc.get<int>() == cc.component);
-	REQUIRE(cc.get<std::string>() == cc.remainder.component);
-	REQUIRE(cc.get<char>() == cc.remainder.remainder.component);
+	REQUIRE(cc.get<int>() == cc.item);
+	REQUIRE(cc.get<std::string>() == cc.tail.item);
+	REQUIRE(cc.get<char>() == cc.tail.tail.item);
 
 	cc.get<int>() = 13;
-	REQUIRE(cc.component == 13);
+	REQUIRE(cc.item == 13);
 	REQUIRE(cc.get<int>() == 13);
 
-	REQUIRE(cc.get<int>() == cc.component);
-	REQUIRE(cc.get<std::string>() == cc.remainder.component);
-	REQUIRE(cc.get<char>() == cc.remainder.remainder.component);
+	REQUIRE(cc.get<int>() == cc.item);
+	REQUIRE(cc.get<std::string>() == cc.tail.item);
+	REQUIRE(cc.get<char>() == cc.tail.tail.item);
 }
 
 TEST_CASE("System<> Allocation", "[system]") {
