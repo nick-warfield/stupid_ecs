@@ -75,12 +75,42 @@ public:
 	}
 };
 
+template <>
+struct SystemHelper<SystemData<>> {
+	static component_flag make(
+			SystemData<> &,
+			const ComponentConfig<> &,
+			const size_t &) {
+		return 0;
 	}
 
+	static Item<> get(
+			SystemData<> &,
+			const component_flag &,
+			const size_t &) {
+		return Item<>();
+	}
+};
+
+template <typename Head, typename... Tail>
+struct SystemHelper<SystemData<Head, Tail...>> {
+	static component_flag make(
+			SystemData<Head, Tail...> &data,
+			const ComponentConfig<Head, Tail...> &cc,
+			const size_t &index) {
+		assign_or_push(data.data, cc.item.value_or(Head()), index);
+		auto b = SystemHelper<SystemData<Tail...>>::make(data.tail, cc.tail, index) << 1;
+		return b | cc.item.has_value();
 	}
 
-	}
+	static Item<Head, Tail...> get(
+			SystemData<Head, Tail...> &data,
+			const component_flag &bits,
+			const size_t &index) {
 		auto value = bits & 1
+			? std::optional(std::ref(data.data[index]))
 			: std::nullopt;
+		auto tail = SystemHelper<SystemData<Tail...>>::get(data.tail, bits >> 1, index);
+		return Item<Head, Tail...>(value, tail);
 	}
 };
