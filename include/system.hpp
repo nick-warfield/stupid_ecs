@@ -58,10 +58,6 @@ public:
 		}
 	}
 
-	component_flag get_bits(const Entity &id) {
-		return m_component[id.index];
-	}
-
 	bool is_alive(const Entity &id) {
 		return m_generation[id.index] == id.generation
 			&& m_component[id.index] & COMPONENT_ALIVE;

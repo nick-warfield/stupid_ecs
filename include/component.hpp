@@ -29,8 +29,10 @@ struct ComponentConfig<T, R...> {
 		item(other.item),
 		tail(other.tail) { }
 
-	ComponentConfig(std::optional<T> value, const ComponentConfig<R...> &other)
-		: item(value),
+	ComponentConfig(
+			std::optional<T> value,
+			const ComponentConfig<R...> &other) :
+		item(value),
 		tail(other) { }
 
 	template <uint Index>
