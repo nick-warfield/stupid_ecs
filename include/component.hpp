@@ -4,12 +4,6 @@
 #include <optional>
 #include <iostream>
 
-using component_flag = uint16_t;
-const component_flag COMPONENT_ALIVE   = 0b1000000000000000;
-const component_flag COMPONENT_01_FLAG = 0b0000000000000001;
-const component_flag COMPONENT_02_FLAG = 0b0000000000000010;
-const component_flag COMPONENT_03_FLAG = 0b0000000000000100;
-
 template<uint I, typename T>
 struct GetIndex;
 

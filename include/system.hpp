@@ -8,6 +8,9 @@
 #include "component.hpp"
 #include "entity.hpp"
 
+using bitmask = uint16_t;
+const bitmask ENTITY_ALIVE = 0b1000000000000000;
+
 template <typename T>
 void assign_or_push(std::vector<T>& vec, T item, size_t index) {
 	if (index >= vec.size())
@@ -39,7 +42,7 @@ template <typename... T>
 class System {
 	std::stack<std::size_t> m_next_alloc;
 	std::vector<std::size_t> m_generation;
-	std::vector<component_flag> m_component;
+	std::vector<bitmask> m_component;
 	SystemData<T...> m_data;
 
 public:
@@ -54,13 +57,13 @@ public:
 		}
 
 		auto flags = SystemHelper<SystemData<T...>>::make(m_data, cc, next);
-		assign_or_push<component_flag>(m_component, COMPONENT_ALIVE | flags, next);
+		assign_or_push<bitmask>(m_component, ENTITY_ALIVE | flags, next);
 		return Entity(m_generation[next], next);
 	}
 
 	void erase(const Entity& id) {
 		if (m_generation[id.index] != id.generation) return;
-		m_component[id.index] &= ~COMPONENT_ALIVE;
+		m_component[id.index] &= ~ENTITY_ALIVE;
 		m_next_alloc.push(id.index);
 	}
 
@@ -71,13 +74,13 @@ public:
 
 	bool is_alive(const Entity &id) {
 		return m_generation[id.index] == id.generation
-			&& m_component[id.index] & COMPONENT_ALIVE;
+			&& m_component[id.index] & ENTITY_ALIVE;
 	}
 };
 
 template <>
 struct SystemHelper<SystemData<>> {
-	static component_flag make(
+	static bitmask make(
 			SystemData<> &,
 			const ComponentConfig<> &,
 			const size_t &) {
@@ -86,7 +89,7 @@ struct SystemHelper<SystemData<>> {
 
 	static Item<> get(
 			SystemData<> &,
-			const component_flag &,
+			const bitmask &,
 			const size_t &) {
 		return Item<>();
 	}
@@ -94,7 +97,7 @@ struct SystemHelper<SystemData<>> {
 
 template <typename Head, typename... Tail>
 struct SystemHelper<SystemData<Head, Tail...>> {
-	static component_flag make(
+	static bitmask make(
 			SystemData<Head, Tail...> &data,
 			const ComponentConfig<Head, Tail...> &cc,
 			const size_t &index) {
@@ -105,7 +108,7 @@ struct SystemHelper<SystemData<Head, Tail...>> {
 
 	static Item<Head, Tail...> get(
 			SystemData<Head, Tail...> &data,
-			const component_flag &bits,
+			const bitmask &bits,
 			const size_t &index) {
 		auto value = bits & 1
 			? std::optional(std::ref(data.data[index]))
