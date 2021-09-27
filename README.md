@@ -25,6 +25,7 @@ TODO:
 	* If it should exsist, it needs to be System::Item
 * Consolidate static Get Helpers
 * Restrict Entity creation to System
+* constexpr and other optimizations
 * User defined max number of components
 	* prolly need some #ifdefs to accomplish this
 * Verify vector + default allocator actually alligns data in memory
