@@ -16,7 +16,6 @@ TODO:
 	* would also make entites fat
 	* hides the fact that entites need to reference a system, not sure if this is good or bad
 * Implement system overloads and getters
-	* system[entity] instead of system.get(entity)
 	* system.get<Position>(entity) == system.get(entity)->get<Position>()
 	* does system<Position>[entity] make sense?
 * Item changes

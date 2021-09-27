@@ -66,7 +66,7 @@ public:
 		m_next_alloc.push(id.index);
 	}
 
-	boost::optional<Item<T...>> get(const Entity &id) {
+	boost::optional<Item<T...>> operator[](const Entity &id) {
 		if (!is_alive(id)) return {};
 		return SystemHelper<SystemData<T...>>::get(m_data, m_component[id.index], id.index);
 	}

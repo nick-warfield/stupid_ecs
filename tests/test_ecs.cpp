@@ -224,51 +224,51 @@ TEST_CASE("System<> get", "[system]") {
 	System sys;
 	ComponentConfig cc;
 	Entity e = sys.make(cc);
-	REQUIRE(sys.get(e).has_value());
+	REQUIRE(sys[e].has_value());
 	sys.erase(e);
-	REQUIRE_FALSE(sys.get(e).has_value());
+	REQUIRE_FALSE(sys[e].has_value());
 }
 
 TEST_CASE("System<T, R...> get", "[system]") {
 	System<int, std::string, char> sys;
 	ComponentConfig<int, std::string, char> cc;
 	Entity e1 = sys.make(cc);
-	REQUIRE(sys.get(e1).has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<0>().has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<1>().has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<2>().has_value());
+	REQUIRE(sys[e1].has_value());
+	REQUIRE_FALSE(sys[e1]->get<0>().has_value());
+	REQUIRE_FALSE(sys[e1]->get<1>().has_value());
+	REQUIRE_FALSE(sys[e1]->get<2>().has_value());
 
 	cc.get<int>() = 13;
 	cc.get<std::string>() = "beer & pizza";
 	Entity e2 = sys.make(cc);
-	REQUIRE(sys.get(e1).has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<0>().has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<1>().has_value());
-	REQUIRE_FALSE(sys.get(e1)->get<2>().has_value());
-	REQUIRE(sys.get(e2).has_value());
-	REQUIRE(*sys.get(e2)->get<0>() == 13);
-	REQUIRE(*sys.get(e2)->get<1>() == "beer & pizza");
-	REQUIRE_FALSE(sys.get(e2)->get<2>().has_value());
+	REQUIRE(sys[e1].has_value());
+	REQUIRE_FALSE(sys[e1]->get<0>().has_value());
+	REQUIRE_FALSE(sys[e1]->get<1>().has_value());
+	REQUIRE_FALSE(sys[e1]->get<2>().has_value());
+	REQUIRE(sys[e2].has_value());
+	REQUIRE(*sys[e2]->get<0>() == 13);
+	REQUIRE(*sys[e2]->get<1>() == "beer & pizza");
+	REQUIRE_FALSE(sys[e2]->get<2>().has_value());
 	
-	*sys.get(e2)->get<0>() = 5;
-	REQUIRE(*sys.get(e2)->get<0>() == 5);
-	REQUIRE(*sys.get(e2)->get<1>() == "beer & pizza");
-	REQUIRE_FALSE(sys.get(e2)->get<2>().has_value());
+	*sys[e2]->get<0>() = 5;
+	REQUIRE(*sys[e2]->get<0>() == 5);
+	REQUIRE(*sys[e2]->get<1>() == "beer & pizza");
+	REQUIRE_FALSE(sys[e2]->get<2>().has_value());
 
-	*sys.get(e2)->get<1>() = "chips & salsa";
-	REQUIRE(*sys.get(e2)->get<0>() == 5);
-	REQUIRE(*sys.get(e2)->get<1>() == "chips & salsa");
-	REQUIRE_FALSE(sys.get(e2)->get<2>().has_value());
+	*sys[e2]->get<1>() = "chips & salsa";
+	REQUIRE(*sys[e2]->get<0>() == 5);
+	REQUIRE(*sys[e2]->get<1>() == "chips & salsa");
+	REQUIRE_FALSE(sys[e2]->get<2>().has_value());
 
 	cc.get<1>() = boost::none;
 	cc.get<2>() = 'f';
 	sys.erase(e1);
 	Entity e3 = sys.make(cc);
-	REQUIRE_FALSE(sys.get(e1).has_value());
-	REQUIRE(*sys.get(e2)->get<0>() == 5);
-	REQUIRE(*sys.get(e2)->get<1>() == "chips & salsa");
-	REQUIRE(*sys.get(e3)->get<0>() == 13);
-	REQUIRE_FALSE(sys.get(e3)->get<1>().has_value());
-	REQUIRE(*sys.get(e3)->get<2>() == 'f');
+	REQUIRE_FALSE(sys[e1].has_value());
+	REQUIRE(*sys[e2]->get<0>() == 5);
+	REQUIRE(*sys[e2]->get<1>() == "chips & salsa");
+	REQUIRE(*sys[e3]->get<0>() == 13);
+	REQUIRE_FALSE(sys[e3]->get<1>().has_value());
+	REQUIRE(*sys[e3]->get<2>() == 'f');
 }
 
