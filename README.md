@@ -11,6 +11,8 @@ Usage:
 
 TODO:
 * wrap everything in a namespace
+* separate implementation from headers
+	* this can be done by including an implementation file at the end of the header
 * Make entities hold a system reference?
 	* this would enable end users to not pass around a system everywhere
 	* would also make entites fat
@@ -25,6 +27,9 @@ TODO:
 * Restrict Entity creation to System
 * User defined max number of components
 	* prolly need some #ifdefs to accomplish this
+* Verify vector + default allocator actually alligns data in memory
+	* I'm pretty sure it does, but I need to make sure
+	* If it doesn't, I guess I'll have to write an allocator lol
 * Thread safety
 * System::Iterator
 * Read & Write System and ComponentConfigs to file
