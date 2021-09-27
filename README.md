@@ -11,9 +11,6 @@ Usage:
 
 TODO:
 * wrap everything in a namespace
-* switch to boost::optional
-	* std::optional<std::reference_wrapper<T>> is clunky, both for me and end users
-	* I could return T*const, but optional<T&> is much more clear about the intent
 * Make entities hold a system reference?
 	* this would enable end users to not pass around a system everywhere
 	* would also make entites fat

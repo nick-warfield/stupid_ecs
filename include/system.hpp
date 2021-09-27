@@ -1,9 +1,9 @@
 #pragma once
 
-#include <optional>
 #include <vector>
 #include <stack>
 #include <memory>
+#include <boost/optional.hpp>
 
 #include "component.hpp"
 #include "entity.hpp"
@@ -20,8 +20,7 @@ void assign_or_push(std::vector<T>& vec, T item, size_t index) {
 }
 
 template<typename ...T>
-using Item = ComponentConfig<
-	std::reference_wrapper<T>...>;
+using Item = ComponentConfig<T&...>;
 
 template <typename T>
 struct SystemHelper;
@@ -67,7 +66,7 @@ public:
 		m_next_alloc.push(id.index);
 	}
 
-	std::optional<Item<T...>> get(const Entity &id) {
+	boost::optional<Item<T...>> get(const Entity &id) {
 		if (!is_alive(id)) return {};
 		return SystemHelper<SystemData<T...>>::get(m_data, m_component[id.index], id.index);
 	}
@@ -111,8 +110,8 @@ struct SystemHelper<SystemData<Head, Tail...>> {
 			const bitmask &bits,
 			const size_t &index) {
 		auto value = bits & 1
-			? std::optional(std::ref(data.data[index]))
-			: std::nullopt;
+			? boost::optional<Head&>(data.data[index])
+			: boost::none;
 		auto tail = SystemHelper<SystemData<Tail...>>::get(data.tail, bits >> 1, index);
 		return Item<Head, Tail...>(value, tail);
 	}

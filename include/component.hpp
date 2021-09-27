@@ -1,8 +1,8 @@
 #pragma once
 
 #include <fstream>
-#include <optional>
 #include <iostream>
+#include <boost/optional.hpp>
 
 template<uint I, typename T>
 struct GetIndex;
@@ -16,7 +16,7 @@ struct ComponentConfig { };
 template<typename T, typename... R>
 struct ComponentConfig<T, R...> {
 	ComponentConfig() :
-		item(std::nullopt),
+		item(boost::none),
 		tail() { }
 
 	ComponentConfig(const ComponentConfig<T, R...> &other) :
@@ -24,7 +24,7 @@ struct ComponentConfig<T, R...> {
 		tail(other.tail) { }
 
 	ComponentConfig(
-			std::optional<T> value,
+			boost::optional<T> value,
 			const ComponentConfig<R...> &other) :
 		item(value),
 		tail(other) { }
@@ -39,14 +39,14 @@ struct ComponentConfig<T, R...> {
 		return GetType<Type, ComponentConfig<T, R...>>::get(*this);
 	}
 
-	std::optional<T> item;
+	boost::optional<T> item;
 	ComponentConfig<R...> tail;
 };
 
 // 0 case -> what we looking for
 template <typename Head, typename... Tail>
 struct GetIndex<0, ComponentConfig<Head, Tail...>> {
-	static std::optional<Head>& get(ComponentConfig<Head, Tail...>& cc) {
+	static boost::optional<Head>& get(ComponentConfig<Head, Tail...>& cc) {
 		return cc.item;
 	}
 };
@@ -61,7 +61,7 @@ struct GetIndex<Index, ComponentConfig<Head, Tail...>> {
 
 template <typename Head, typename... Tail>
 struct GetType<Head, ComponentConfig<Head, Tail...>> {
-	static std::optional<Head>& get(ComponentConfig<Head, Tail...>& cc) {
+	static boost::optional<Head>& get(ComponentConfig<Head, Tail...>& cc) {
 		return cc.item;
 	}
 };
