@@ -21,7 +21,6 @@ TODO:
 	* Not sure if Item needs to exsist
 	* If it should exsist, it needs to be System::Item
 * Consolidate static Get Helpers
-* Restrict Entity creation to System
 * constexpr and other optimizations
 * User defined max number of components
 	* prolly need some #ifdefs to accomplish this
