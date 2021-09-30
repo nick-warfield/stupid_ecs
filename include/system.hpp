@@ -21,22 +21,22 @@ void assign_or_push(std::vector<T>& vec, T item, size_t index) {
 	else
 		vec[index] = item;
 }
-}
-
-template<typename ...T>
-using Item = ComponentConfig<T&...>;
 
 template <typename T>
 struct SystemHelper;
 
 template <typename... T>
 struct SystemData;
+}
+
+template<typename ...T>
+using Item = ComponentConfig<T&...>;
 
 template <>
-struct SystemData<> { };
+struct details::SystemData<> { };
 	
 template <typename Head, typename ...Tail>
-struct SystemData<Head, Tail...> {
+struct details::SystemData<Head, Tail...> {
 	std::vector<Head> data;
 	SystemData<Tail...> tail;
 };
@@ -46,7 +46,7 @@ class System {
 	std::stack<std::size_t> m_next_alloc;
 	std::vector<std::size_t> m_generation;
 	std::vector<details::bitmask> m_component;
-	SystemData<T...> m_data;
+	details::SystemData<T...> m_data;
 
 public:
 	Entity make(ComponentConfig<T...>& cc) {
@@ -59,7 +59,7 @@ public:
 			m_generation.push_back(0);
 		}
 
-		auto flags = SystemHelper<SystemData<T...>>::make(m_data, cc, next);
+		auto flags = details::SystemHelper<details::SystemData<T...>>::make(m_data, cc, next);
 		details::assign_or_push<details::bitmask>(
 				m_component,
 				details::ENTITY_ALIVE | flags,
@@ -76,7 +76,7 @@ public:
 
 	boost::optional<Item<T...>> operator[](const Entity &id) {
 		if (!is_alive(id)) return {};
-		return SystemHelper<SystemData<T...>>::get(m_data, m_component[id.index], id.index);
+		return details::SystemHelper<details::SystemData<T...>>::get(m_data, m_component[id.index], id.index);
 	}
 
 	bool is_alive(const Entity &id) {
@@ -86,7 +86,7 @@ public:
 };
 
 template <>
-struct SystemHelper<SystemData<>> {
+struct details::SystemHelper<details::SystemData<>> {
 	static details::bitmask make(
 			SystemData<> &,
 			const ComponentConfig<> &,
@@ -103,7 +103,7 @@ struct SystemHelper<SystemData<>> {
 };
 
 template <typename Head, typename... Tail>
-struct SystemHelper<SystemData<Head, Tail...>> {
+struct details::SystemHelper<details::SystemData<Head, Tail...>> {
 	static details::bitmask make(
 			SystemData<Head, Tail...> &data,
 			const ComponentConfig<Head, Tail...> &cc,
