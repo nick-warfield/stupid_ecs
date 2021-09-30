@@ -10,6 +10,7 @@
 
 namespace secs {
 
+namespace details {
 using bitmask = uint16_t;
 const bitmask ENTITY_ALIVE = 0b1000000000000000;
 
@@ -19,6 +20,7 @@ void assign_or_push(std::vector<T>& vec, T item, size_t index) {
 		vec.push_back(item);
 	else
 		vec[index] = item;
+}
 }
 
 template<typename ...T>
@@ -43,7 +45,7 @@ template <typename... T>
 class System {
 	std::stack<std::size_t> m_next_alloc;
 	std::vector<std::size_t> m_generation;
-	std::vector<bitmask> m_component;
+	std::vector<details::bitmask> m_component;
 	SystemData<T...> m_data;
 
 public:
@@ -58,13 +60,17 @@ public:
 		}
 
 		auto flags = SystemHelper<SystemData<T...>>::make(m_data, cc, next);
-		assign_or_push<bitmask>(m_component, ENTITY_ALIVE | flags, next);
+		details::assign_or_push<details::bitmask>(
+				m_component,
+				details::ENTITY_ALIVE | flags,
+				next);
+
 		return Entity(m_generation[next], next);
 	}
 
 	void erase(const Entity& id) {
 		if (m_generation[id.index] != id.generation) return;
-		m_component[id.index] &= ~ENTITY_ALIVE;
+		m_component[id.index] &= ~details::ENTITY_ALIVE;
 		m_next_alloc.push(id.index);
 	}
 
@@ -75,13 +81,13 @@ public:
 
 	bool is_alive(const Entity &id) {
 		return m_generation[id.index] == id.generation
-			&& m_component[id.index] & ENTITY_ALIVE;
+			&& m_component[id.index] & details::ENTITY_ALIVE;
 	}
 };
 
 template <>
 struct SystemHelper<SystemData<>> {
-	static bitmask make(
+	static details::bitmask make(
 			SystemData<> &,
 			const ComponentConfig<> &,
 			const size_t &) {
@@ -90,7 +96,7 @@ struct SystemHelper<SystemData<>> {
 
 	static Item<> get(
 			SystemData<> &,
-			const bitmask &,
+			const details::bitmask &,
 			const size_t &) {
 		return Item<>();
 	}
@@ -98,7 +104,7 @@ struct SystemHelper<SystemData<>> {
 
 template <typename Head, typename... Tail>
 struct SystemHelper<SystemData<Head, Tail...>> {
-	static bitmask make(
+	static details::bitmask make(
 			SystemData<Head, Tail...> &data,
 			const ComponentConfig<Head, Tail...> &cc,
 			const size_t &index) {
@@ -109,7 +115,7 @@ struct SystemHelper<SystemData<Head, Tail...>> {
 
 	static Item<Head, Tail...> get(
 			SystemData<Head, Tail...> &data,
-			const bitmask &bits,
+			const details::bitmask &bits,
 			const size_t &index) {
 		auto value = bits & 1
 			? boost::optional<Head&>(data.data[index])
