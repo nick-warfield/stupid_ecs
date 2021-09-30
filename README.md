@@ -10,9 +10,6 @@ Usage:
 * Access entity data via: entity->position.x;
 
 TODO:
-* wrap everything in a namespace
-* separate implementation from headers
-	* this can be done by including an implementation file at the end of the header
 * Make entities hold a system reference?
 	* this would enable end users to not pass around a system everywhere
 	* would also make entites fat
