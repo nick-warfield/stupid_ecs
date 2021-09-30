@@ -2,6 +2,8 @@
 #include <cstddef>
 #include <optional>
 
+namespace secs {
+
 struct Entity {
 	Entity(const Entity &other)
 		: generation(other.generation), index(other.index) { }
@@ -15,4 +17,6 @@ struct Entity {
 	const std::size_t generation;
 	const std::size_t index;
 };
+
+}
 

@@ -7,6 +7,8 @@
 #include "catch.hpp"
 #include "ecs.hpp"
 
+using namespace secs;
+
 TEST_CASE("item Config Setting Values", "[item]") {
 	ComponentConfig<int, std::string, char> cc;
 	REQUIRE(cc.get<int>() == cc.item);

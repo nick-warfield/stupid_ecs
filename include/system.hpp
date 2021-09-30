@@ -8,6 +8,8 @@
 #include "component.hpp"
 #include "entity.hpp"
 
+namespace secs {
+
 using bitmask = uint16_t;
 const bitmask ENTITY_ALIVE = 0b1000000000000000;
 
@@ -116,3 +118,6 @@ struct SystemHelper<SystemData<Head, Tail...>> {
 		return Item<Head, Tail...>(value, tail);
 	}
 };
+
+}
+

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <boost/optional.hpp>
 
+namespace secs {
+
 template<uint I, typename T>
 struct GetIndex;
 
@@ -72,3 +74,6 @@ struct GetType<Type, ComponentConfig<Head, Tail...>> {
 		return GetType<Type, ComponentConfig<Tail...>>::get(cc.tail);
 	}
 };
+
+}
+
