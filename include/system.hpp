@@ -1,116 +1,129 @@
 #pragma once
 
-#include <optional>
 #include <vector>
 #include <stack>
 #include <memory>
+#include <boost/optional.hpp>
 
 #include "component.hpp"
 #include "entity.hpp"
 
-template<typename ...T>
-using Item = ComponentConfig<
-	std::reference_wrapper<T>...>;
+namespace secs {
 
-template <typename ...T>
-class System { };
+namespace details {
+using bitmask = uint16_t;
+const bitmask ENTITY_ALIVE = 0b1000000000000000;
+
+template <typename T>
+void assign_or_push(std::vector<T>& vec, T item, size_t index) {
+	if (index >= vec.size())
+		vec.push_back(item);
+	else
+		vec[index] = item;
+}
+}
+
+template<typename ...T>
+using Item = ComponentConfig<T&...>;
+
+template <typename T>
+struct SystemHelper;
+
+template <typename... T>
+struct SystemData;
 
 template <>
-class System<> {
+struct SystemData<> { };
+	
+template <typename Head, typename ...Tail>
+struct SystemData<Head, Tail...> {
+	std::vector<Head> data;
+	SystemData<Tail...> tail;
+};
+
+template <typename... T>
+class System {
 	std::stack<std::size_t> m_next_alloc;
 	std::vector<std::size_t> m_generation;
-	std::vector<component_flag> m_component;
+	std::vector<details::bitmask> m_component;
+	SystemData<T...> m_data;
 
 public:
-	Entity make(ComponentConfig<> cc) { return _make_helper(cc, 0); }
-	Entity _make_helper(ComponentConfig<>, const component_flag &flags) {
-		if (m_next_alloc.empty()) {
-			m_generation.push_back(0);
-			m_component.push_back(COMPONENT_ALIVE | flags);
-			return Entity(0, m_generation.size() - 1);
-		} else {
-			auto next = m_next_alloc.top();
+	Entity make(ComponentConfig<T...>& cc) {
+		auto next = m_generation.size();
+		if (!m_next_alloc.empty()) {
+			next = m_next_alloc.top();
 			m_next_alloc.pop();
 			m_generation[next]++;
-			m_component[next] = COMPONENT_ALIVE | flags;
-			return Entity(m_generation[next], next);
+		} else {
+			m_generation.push_back(0);
 		}
+
+		auto flags = SystemHelper<SystemData<T...>>::make(m_data, cc, next);
+		details::assign_or_push<details::bitmask>(
+				m_component,
+				details::ENTITY_ALIVE | flags,
+				next);
+
+		return Entity(m_generation[next], next);
 	}
 
-	void erase(const Entity &id) {
+	void erase(const Entity& id) {
 		if (m_generation[id.index] != id.generation) return;
-		m_component[id.index] &= ~COMPONENT_ALIVE;
+		m_component[id.index] &= ~details::ENTITY_ALIVE;
 		m_next_alloc.push(id.index);
 	}
-	
-	std::optional<Item<>> get(const Entity &id) {
-		component_flag bits = 0;
-		return _get_helper(id, bits);
-	}
-	std::optional<Item<>> _get_helper(
-			const Entity &id,
-			component_flag &bits) {
-		if (is_alive(id)) {
-			bits = m_component[id.index];
-			return ComponentConfig();
-		} else {
-			return {};
-		}
+
+	boost::optional<Item<T...>> operator[](const Entity &id) {
+		if (!is_alive(id)) return {};
+		return SystemHelper<SystemData<T...>>::get(m_data, m_component[id.index], id.index);
 	}
 
 	bool is_alive(const Entity &id) {
 		return m_generation[id.index] == id.generation
-			&& m_component[id.index] & COMPONENT_ALIVE;
+			&& m_component[id.index] & details::ENTITY_ALIVE;
 	}
 };
 
-template <typename T, typename ...R>
-class System<T, R...> {
-public:
-	Entity make(ComponentConfig<T, R...> cc) {
-		component_flag b = 0;
-		return _make_helper(cc, b);
-	}
-	Entity _make_helper(ComponentConfig<T, R...> cc, const component_flag &flags) {
-		auto f = (flags << 1) | cc.item.has_value();
-		Entity e = m_tail._make_helper(cc.tail, f);
-		if (e.index == m_data.size()) {
-			m_data.push_back(cc.item.value_or(T()));
-		} else {
-			m_data[e.index] = cc.item.value_or(T());
-		}
-		return e;
-	}
-	void erase(const Entity &id) {
-		m_tail.erase(id);
+template <>
+struct SystemHelper<SystemData<>> {
+	static details::bitmask make(
+			SystemData<> &,
+			const ComponentConfig<> &,
+			const size_t &) {
+		return 0;
 	}
 
-	bool is_alive(const Entity &id) {
-		return m_tail.is_alive(id);
+	static Item<> get(
+			SystemData<> &,
+			const details::bitmask &,
+			const size_t &) {
+		return Item<>();
+	}
+};
+
+template <typename Head, typename... Tail>
+struct SystemHelper<SystemData<Head, Tail...>> {
+	static details::bitmask make(
+			SystemData<Head, Tail...> &data,
+			const ComponentConfig<Head, Tail...> &cc,
+			const size_t &index) {
+		assign_or_push(data.data, cc.item.value_or(Head()), index);
+		auto b = SystemHelper<SystemData<Tail...>>::make(data.tail, cc.tail, index) << 1;
+		return b | cc.item.has_value();
 	}
 
-	std::optional<Item<T, R...>>
-	get(const Entity &id) {
-		if (!is_alive(id)) return std::nullopt;
-		component_flag bits = 0;
-		return _get_helper(id, bits);
-	}
-	std::optional<Item<T, R...>>
-	_get_helper(const Entity &id, component_flag &bits) {
-		auto tail = m_tail._get_helper(id, bits);
+	static Item<Head, Tail...> get(
+			SystemData<Head, Tail...> &data,
+			const details::bitmask &bits,
+			const size_t &index) {
 		auto value = bits & 1
-			? std::optional(std::ref(m_data[id.index]))
-			: std::nullopt;
-		bits >>= 1;
-
-		ComponentConfig<
-			std::reference_wrapper<T>,
-			std::reference_wrapper<R>...>
-		cc(value, tail.value());
-		return cc;
+			? boost::optional<Head&>(data.data[index])
+			: boost::none;
+		auto tail = SystemHelper<SystemData<Tail...>>::get(data.tail, bits >> 1, index);
+		return Item<Head, Tail...>(value, tail);
 	}
-
-private:
-	std::vector<T> m_data;
-	System<R...> m_tail;
 };
+
+}
+
