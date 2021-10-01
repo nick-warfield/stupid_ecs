@@ -21,9 +21,6 @@ TODO:
 * constexpr and other optimizations
 * User defined max number of components
 	* prolly need some #ifdefs to accomplish this
-* Verify vector + default allocator actually alligns data in memory
-	* I'm pretty sure it does, but I need to make sure
-	* If it doesn't, I guess I'll have to write an allocator lol
 * Thread safety
 * System::Iterator
 * Read & Write System and ComponentConfigs to file
