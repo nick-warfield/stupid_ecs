@@ -7,7 +7,7 @@ Compilation Instrucions:
 Usage:
 * Define components with a #define COMP_* or a component_list.txt, haven't decided yet
 * Create a System at the start of your program, and use it to create entities.
-* Access entity data via: entity->position.x;
+* Access entity data via: *system[entity]->get<Position>()
 
 TODO:
 * Make entities hold a system reference?
@@ -27,3 +27,4 @@ TODO:
 * Thread safety
 * System::Iterator
 * Read & Write System and ComponentConfigs to file
+* Write dependencies section in README
