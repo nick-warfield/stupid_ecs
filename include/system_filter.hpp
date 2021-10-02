@@ -23,9 +23,6 @@ struct Filter<System<T...>> {
 
 template <typename Data1, typename... DataN, typename... T>
 struct Filter<System<T...>, Data1, DataN...> {
-	template <typename...>
-	friend class System;
-
 	Filter(System<T...>& sys) :
 		m_ptr(&sys),
 		m_mask(Filter<System<T...>, Data1, DataN...>::mask(sys.m_data))
@@ -39,7 +36,7 @@ struct Filter<System<T...>, Data1, DataN...> {
 			details::SystemData<T...>& data,
 			const size_t index) {
 		return std::tuple_cat(
-				std::make_tuple(&details::SystemGetType<Data1, details::SystemData<T...>>::get_data(data)[index]),
+				std::tuple<Data1&>(details::SystemGetType<Data1, details::SystemData<T...>>::get_data(data)[index]),
 				Filter<System<T...>, DataN...>::get(data));
 	}
 
@@ -80,7 +77,7 @@ struct Filter<System<T...>, Data1, DataN...> {
 	const Iterator begin() const {
 		size_t index = 0;
 		while (index < m_ptr->m_component.size()
-				&& (m_ptr->m_component[index] & mask) != mask) {
+				&& (m_ptr->m_component[index] & m_mask) != m_mask) {
 			index++;
 		}
 

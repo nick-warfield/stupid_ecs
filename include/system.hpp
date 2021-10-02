@@ -55,6 +55,9 @@ struct details::SystemData<Head, Tail...> {
 
 template <typename... T>
 class System {
+	template <typename...>
+	friend struct Filter;
+
 	std::stack<std::size_t> m_next_alloc;
 	std::vector<std::size_t> m_generation;
 	std::vector<details::bitmask> m_component;
