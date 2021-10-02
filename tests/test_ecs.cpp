@@ -274,3 +274,28 @@ TEST_CASE("System<T, R...> get", "[system]") {
 	REQUIRE(*sys[e3]->get<2>() == 'f');
 }
 
+TEST_CASE("System Iterator", "[system]") {
+	System<int, char, std::string> sys;
+	std::vector<Entity> ent;
+	ComponentConfig<int, char, std::string> cc;
+
+	for (int i = 0; i < 25; i++) {
+		cc.get<int>() = i;
+		cc.get<char>() = i % 3 == 0
+			? boost::none
+			: boost::make_optional('F');
+		cc.get<std::string>() = i % 5 == 0
+			? boost::make_optional("Hello World")
+			: boost::none;
+
+		ent.push_back(sys.make(cc));
+	}
+
+	int index = 0, num;
+	for (auto e : sys.iter<int>()) {
+		std::tie(num) = e;
+		REQUIRE(num == index);
+		index++;
+	}
+}
+
