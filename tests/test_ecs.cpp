@@ -317,6 +317,15 @@ TEST_CASE("System Iterator", "[system]") {
 	}
 	REQUIRE(count == 3);
 
+	count = 0;
+	for (auto [c, s, n] : sys.iter<char, std::string, int>()) {
+		REQUIRE((n - 1) % 5 == 0);
+		REQUIRE(c == 'j');
+		REQUIRE(s == "Hello World");
+		count++;
+	}
+	REQUIRE(count == 3);
+
 	for (auto i = 0; i < (int)ent.size(); ++i) {
 		auto e = ent[i];
 		REQUIRE(*sys.get<int>(e) == i + 1);
