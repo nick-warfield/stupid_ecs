@@ -16,7 +16,9 @@ struct Filter<System<T...>> {
 		return details::ENTITY_ALIVE;
 	}
 
-	static std::tuple<> get(details::SystemData<T...>&) {
+	static std::tuple<> get(
+			details::SystemData<T...>&,
+			const size_t&) {
 		return std::make_tuple<>();
 	}
 };
@@ -37,7 +39,7 @@ struct Filter<System<T...>, Data1, DataN...> {
 			const size_t index) {
 		return std::tuple_cat(
 				std::tuple<Data1&>(details::SystemGetType<Data1, details::SystemData<T...>>::get_data(data)[index]),
-				Filter<System<T...>, DataN...>::get(data));
+				Filter<System<T...>, DataN...>::get(data, index));
 	}
 
 	struct Iterator {

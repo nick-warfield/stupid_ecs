@@ -291,11 +291,41 @@ TEST_CASE("System Iterator", "[system]") {
 		ent.push_back(sys.make(cc));
 	}
 
-	int index = 0, num;
-	for (auto e : sys.iter<int>()) {
-		std::tie(num) = e;
+	int index = 0;
+	for (auto [num] : sys.iter<int>()) {
 		REQUIRE(num == index);
+		REQUIRE(*sys.get<int>(ent[index]) == index);
+
+		num++;
+		REQUIRE(num == index + 1);
+		REQUIRE(*sys.get<int>(ent[index]) == index + 1);
+
 		index++;
+	}
+	for (auto i = 0; i < (int)ent.size(); ++i) {
+		REQUIRE(*sys.get<int>(ent[i]) == i + 1);
+	}
+
+	int count = 0;
+	for (auto [n, c, s] : sys.iter<int, char, std::string>()) {
+		REQUIRE((n - 1) % 5 == 0);
+		REQUIRE(c == 'F');
+		c = 'j';
+		REQUIRE(c == 'j');
+		REQUIRE(s == "Hello World");
+		count++;
+	}
+	REQUIRE(count == 3);
+
+	for (auto i = 0; i < (int)ent.size(); ++i) {
+		auto e = ent[i];
+		REQUIRE(*sys.get<int>(e) == i + 1);
+		if (sys.get<std::string>(e))
+			REQUIRE(*sys.get<std::string>(e) == "Hello World");
+		if (sys.get<std::string>(e) && sys.get<char>(e))
+			REQUIRE(*sys.get<char>(ent[i]) == 'j');
+		if (!sys.get<std::string>(e) && sys.get<char>(e))
+			REQUIRE(*sys.get<char>(ent[i]) == 'F');
 	}
 }
 
