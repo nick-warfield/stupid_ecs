@@ -38,6 +38,9 @@ struct SystemGetType;
 template<typename ...T>
 using Item = ComponentConfig<T&...>;
 
+template <typename...>
+struct Filter;
+
 template <>
 struct details::SystemData<> { };
 	
@@ -45,14 +48,30 @@ template <typename Head, typename ...Tail>
 struct details::SystemData<Head, Tail...> {
 	std::vector<Head> data;
 	SystemData<Tail...> tail;
+
+	template <typename U>
+	std::vector<U>& get_data();
 };
 
 template <typename... T>
 class System {
+	template <typename...>
+	friend struct Filter;
+
 	std::stack<std::size_t> m_next_alloc;
 	std::vector<std::size_t> m_generation;
 	std::vector<details::bitmask> m_component;
 	details::SystemData<T...> m_data;
+
+	template <uint Index>
+	auto& get_data() {
+		return details::GetIndex<Index, details::SystemData<T...>>::get_data(m_data);
+	}
+
+	template <typename Type>
+	auto& get_data() {
+		return details::GetType<Type, details::SystemData<T...>>::get_data(m_data);
+	}
 
 public:
 	Entity make(ComponentConfig<T...>& cc) {
@@ -65,7 +84,12 @@ public:
 			m_generation.push_back(0);
 		}
 
-		auto flags = details::SystemHelper<details::SystemData<T...>>::make(m_data, cc, next);
+		auto flags = details::SystemHelper<
+			details::SystemData<T...>>::make(
+					m_data,
+					cc,
+					next);
+
 		details::assign_or_push<details::bitmask>(
 				m_component,
 				details::ENTITY_ALIVE | flags,
@@ -99,6 +123,11 @@ public:
 			? details::SystemGetType<Type, details::SystemData<T...>
 				>::get(m_data, m_component[id.index], id.index)
 			: boost::none;
+	}
+
+	template <typename... U>
+	auto iter() {
+		return Filter<System<T...>, U...>(*this);
 	}
 
 	bool is_alive(const Entity &id) {
@@ -157,11 +186,16 @@ struct details::SystemGetIndex<0, details::SystemData<Head, Tail...>> {
 			? boost::optional<Head&>(data.data[index])
 			: boost::none;
 	}
+
+	static std::vector<Head>& get_data(
+			details::SystemData<Head, Tail...> &data) {
+		return data.data;
+	}
 };
 
 template <uint Index, typename Head, typename... Tail>
 struct details::SystemGetIndex<Index, details::SystemData<Head, Tail...>> {
-	static boost::optional<Head&> get(
+	static auto get(
 			details::SystemData<Head, Tail...> &data,
 			const details::bitmask &bits,
 			const std::size_t &index) {
@@ -169,6 +203,12 @@ struct details::SystemGetIndex<Index, details::SystemData<Head, Tail...>> {
 				data.tail,
 				bits >> 1,
 				index);
+	}
+
+	static auto& get_data(
+			details::SystemData<Head, Tail...> &data) {
+		return SystemGetIndex<Index - 1, SystemData<Tail...>>::get_data(
+				data.tail);
 	}
 };
 
@@ -182,6 +222,15 @@ struct details::SystemGetType<Head, details::SystemData<Head, Tail...>> {
 			? boost::optional<Head&>(data.data[index])
 			: boost::none;
 	}
+
+	static std::vector<Head>& get_data(
+			details::SystemData<Head, Tail...> &data) {
+		return data.data;
+	}
+
+	static details::bitmask get_flag(const details::SystemData<Head, Tail...>&) {
+		return 1;
+	}
 };
 
 template <typename Type, typename Head, typename... Tail>
@@ -194,6 +243,16 @@ struct details::SystemGetType<Type, details::SystemData<Head, Tail...>> {
 				data.tail,
 				bits >> 1,
 				index);
+	}
+
+	static std::vector<Type>& get_data(
+			details::SystemData<Head, Tail...> &data) {
+		return SystemGetType<Type, SystemData<Tail...>>::get_data(
+				data.tail);
+	}
+
+	static details::bitmask get_flag(const details::SystemData<Head, Tail...>& data) {
+		return SystemGetType<Type, SystemData<Tail...>>::get_flag(data.tail) << 1;
 	}
 };
 

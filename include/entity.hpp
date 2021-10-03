@@ -19,6 +19,9 @@ private:
 	template <typename... T>
 	friend class System;
 
+	template <typename... T>
+	friend struct Filter;
+
 	Entity(std::size_t gen, std::size_t index)
 		: generation(gen), index(index) { }
 };

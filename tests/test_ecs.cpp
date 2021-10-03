@@ -274,3 +274,148 @@ TEST_CASE("System<T, R...> get", "[system]") {
 	REQUIRE(*sys[e3]->get<2>() == 'f');
 }
 
+TEST_CASE("System Iterator<>", "[system]") {
+	System<int, char, std::string> sys;
+	std::vector<Entity> ent;
+	ComponentConfig<int, char, std::string> cc;
+
+	for (int i = 0; i < 25; i++) {
+		cc.get<int>() = i;
+		cc.get<char>() = i % 3 == 0
+			? boost::none
+			: boost::make_optional('F');
+		cc.get<std::string>() = i % 5 == 0
+			? boost::make_optional("Hello World")
+			: boost::none;
+
+		ent.push_back(sys.make(cc));
+	}
+
+	int index = 0;
+	for (auto i : sys.iter<>()) {
+		REQUIRE(i.get<int&>().has_value());
+		REQUIRE(*i.get<int&>() == index);
+		REQUIRE(*sys.get<int>(ent[index]) == index);
+
+		(*i.get<int&>())++;
+		REQUIRE(*i.get<int&>() == index + 1);
+		REQUIRE(*sys.get<int>(ent[index]) == index + 1);
+
+		if (i.get<char&>())
+			REQUIRE(*i.get<char&>() == 'F');
+
+		if (i.get<std::string&>()) {
+			REQUIRE(*i.get<std::string&>() == "Hello World");
+			*i.get<std::string&>() = "Beer & Pizza";
+			REQUIRE(*i.get<std::string&>() == "Beer & Pizza");
+		}
+
+		index++;
+	}
+	for (auto i = 0; i < (int)ent.size(); ++i) {
+		REQUIRE(sys.get<int>(ent[i]).has_value());
+		REQUIRE(*sys.get<int>(ent[i]) == i + 1);
+		if (sys.get<char>(ent[i]))
+			REQUIRE(*sys.get<char>(ent[i]) == 'F');
+		if (sys.get<std::string>(ent[i]))
+			REQUIRE(*sys.get<std::string>(ent[i]) == "Beer & Pizza");
+	}
+
+	*sys.get<int>(ent[20]) = 99;
+	*sys.get<char>(ent[20]) = 'a';
+	*sys.get<std::string>(ent[20]) = "sentinel";
+	REQUIRE(*sys.get<int>(ent[20]) == 99);
+	REQUIRE(*sys.get<char>(ent[20]) == 'a');
+	REQUIRE(*sys.get<std::string>(ent[20]) == "sentinel");
+	sys.erase(ent[20]);
+
+	for (auto i : sys.iter()) {
+		if (i.get<int&>())
+			REQUIRE_FALSE(*i.get<int&>() == 99);
+		if (i.get<char&>())
+			REQUIRE_FALSE(*i.get<char&>() == 'a');
+		if (i.get<std::string&>())
+			REQUIRE_FALSE(*i.get<std::string&>() == "sentinel");
+	}
+}
+
+TEST_CASE("System Iterator<T...>", "[system]") {
+	System<int, char, std::string> sys;
+	std::vector<Entity> ent;
+	ComponentConfig<int, char, std::string> cc;
+
+	for (int i = 0; i < 25; i++) {
+		cc.get<int>() = i;
+		cc.get<char>() = i % 3 == 0
+			? boost::none
+			: boost::make_optional('F');
+		cc.get<std::string>() = i % 5 == 0
+			? boost::make_optional("Hello World")
+			: boost::none;
+
+		ent.push_back(sys.make(cc));
+	}
+
+	int index = 0;
+	for (auto [num] : sys.iter<int>()) {
+		REQUIRE(num == index);
+		REQUIRE(*sys.get<int>(ent[index]) == index);
+
+		num++;
+		REQUIRE(num == index + 1);
+		REQUIRE(*sys.get<int>(ent[index]) == index + 1);
+
+		index++;
+	}
+	for (auto i = 0; i < (int)ent.size(); ++i) {
+		REQUIRE(*sys.get<int>(ent[i]) == i + 1);
+	}
+
+	int count = 0;
+	for (auto [n, c, s] : sys.iter<int, char, std::string>()) {
+		REQUIRE((n - 1) % 5 == 0);
+		REQUIRE(c == 'F');
+		c = 'j';
+		REQUIRE(c == 'j');
+		REQUIRE(s == "Hello World");
+		count++;
+	}
+	REQUIRE(count == 3);
+
+	count = 0;
+	for (auto [c, s, n] : sys.iter<char, std::string, int>()) {
+		REQUIRE((n - 1) % 5 == 0);
+		REQUIRE(c == 'j');
+		REQUIRE(s == "Hello World");
+		count++;
+	}
+	REQUIRE(count == 3);
+
+	for (auto i = 0; i < (int)ent.size(); ++i) {
+		auto e = ent[i];
+		REQUIRE(*sys.get<int>(e) == i + 1);
+		if (sys.get<std::string>(e))
+			REQUIRE(*sys.get<std::string>(e) == "Hello World");
+		if (sys.get<std::string>(e) && sys.get<char>(e))
+			REQUIRE(*sys.get<char>(ent[i]) == 'j');
+		if (!sys.get<std::string>(e) && sys.get<char>(e))
+			REQUIRE(*sys.get<char>(ent[i]) == 'F');
+	}
+
+	*sys.get<int>(ent[10]) = 99;
+	*sys.get<char>(ent[10]) = 'a';
+	*sys.get<std::string>(ent[10]) = "sentinel";
+	REQUIRE(*sys.get<int>(ent[10]) == 99);
+	REQUIRE(*sys.get<char>(ent[10]) == 'a');
+	REQUIRE(*sys.get<std::string>(ent[10]) == "sentinel");
+	sys.erase(ent[10]);
+
+	index = 0;
+	for (auto [n] : sys.iter<int>())
+		REQUIRE_FALSE(n == 99);
+	for (auto [c] : sys.iter<char>())
+		REQUIRE_FALSE(c == 'a');
+	for (auto [s] : sys.iter<std::string>())
+		REQUIRE_FALSE(s == "sentinel");
+}
+
