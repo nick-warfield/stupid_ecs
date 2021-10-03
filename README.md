@@ -9,19 +9,29 @@ Usage:
 * Create a System at the start of your program, and use it to create entities.
 * Access entity data via: *system[entity]->get<Position>()
 
-TODO:
-* Make entities hold a system reference?
-	* this would enable end users to not pass around a system everywhere
-	* would also make entites fat
-	* hides the fact that entites need to reference a system, not sure if this is good or bad
-* Item changes
-	* Not sure if Item needs to exsist
-	* If it should exsist, it needs to be System::Item
+1.0 Release TODO:
+* Finalize Interface:
+	* Make entities hold a system reference?
+		* this would enable end users to not pass around a system everywhere
+		* would also make entites fat
+		* hides the fact that entites need to reference a system, not sure if this is good or bad
+	* Item changes
+		* Not sure if Item needs to exsist
+		* If it should exsist, it needs to be System::Item
+* Autoformat (things could be prettier and more legible)
 * Consolidate static Get Helpers
 * constexpr and other optimizations
 * User defined max number of components
 	* prolly need some #ifdefs to accomplish this
-* Thread safety
-* System::Iterator
+* Multi-Threading:
+	* Library Should be thread-safe
+	* Integrate multithreading into System?
 * Read & Write System and ComponentConfigs to file
-* Write dependencies section in README
+* Useful README:
+	* Write dependencies section in README
+	* Update usage section in README
+		* add code snippets
+* Expand Testing (when interface is stable-ish):
+	* More Unit Tests
+	* Add Property Based Tests
+	* Automatic Test Case Generation?
