@@ -8,6 +8,7 @@ Usage:
 * Define components with a #define COMP_* or a component_list.txt, haven't decided yet
 * Create a System at the start of your program, and use it to create entities.
 * Access entity data via: *system[entity]->get<Position>()
+* Iterate via: for (auto [pos, vel] : system.iter<Position, Velocity>()) { pos += vel; }
 
 1.0 Release TODO:
 * Finalize Interface:
