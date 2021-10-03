@@ -274,7 +274,55 @@ TEST_CASE("System<T, R...> get", "[system]") {
 	REQUIRE(*sys[e3]->get<2>() == 'f');
 }
 
-TEST_CASE("System Iterator", "[system]") {
+TEST_CASE("System Iterator<>", "[system]") {
+	System<int, char, std::string> sys;
+	std::vector<Entity> ent;
+	ComponentConfig<int, char, std::string> cc;
+
+	for (int i = 0; i < 25; i++) {
+		cc.get<int>() = i;
+		cc.get<char>() = i % 3 == 0
+			? boost::none
+			: boost::make_optional('F');
+		cc.get<std::string>() = i % 5 == 0
+			? boost::make_optional("Hello World")
+			: boost::none;
+
+		ent.push_back(sys.make(cc));
+	}
+
+	int index = 0;
+	for (auto i : sys.iter<>()) {
+		REQUIRE(i.get<int&>().has_value());
+		REQUIRE(*i.get<int&>() == index);
+		REQUIRE(*sys.get<int>(ent[index]) == index);
+
+		(*i.get<int&>())++;
+		REQUIRE(*i.get<int&>() == index + 1);
+		REQUIRE(*sys.get<int>(ent[index]) == index + 1);
+
+		if (i.get<char&>())
+			REQUIRE(*i.get<char&>() == 'F');
+
+		if (i.get<std::string&>()) {
+			REQUIRE(*i.get<std::string&>() == "Hello World");
+			*i.get<std::string&>() = "Beer & Pizza";
+			REQUIRE(*i.get<std::string&>() == "Beer & Pizza");
+		}
+
+		index++;
+	}
+	for (auto i = 0; i < (int)ent.size(); ++i) {
+		REQUIRE(sys.get<int>(ent[i]).has_value());
+		REQUIRE(*sys.get<int>(ent[i]) == i + 1);
+		if (sys.get<char>(ent[i]))
+			REQUIRE(*sys.get<char>(ent[i]) == 'F');
+		if (sys.get<std::string>(ent[i]))
+			REQUIRE(*sys.get<std::string>(ent[i]) == "Beer & Pizza");
+	}
+}
+
+TEST_CASE("System Iterator<T...>", "[system]") {
 	System<int, char, std::string> sys;
 	std::vector<Entity> ent;
 	ComponentConfig<int, char, std::string> cc;

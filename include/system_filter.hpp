@@ -12,6 +12,8 @@ struct Filter;
 
 template <typename... T>
 struct Filter<System<T...>> {
+	Filter(System<T...>& sys) : m_ptr(&sys) { }
+
 	static details::bitmask mask(details::SystemData<T...>&) {
 		return details::ENTITY_ALIVE;
 	}
@@ -21,6 +23,61 @@ struct Filter<System<T...>> {
 			const size_t&) {
 		return std::make_tuple<>();
 	}
+
+	struct Iterator {
+		Iterator(
+				size_t index,
+				System<T...>* ptr) :
+			m_index(index),
+			m_mask(details::ENTITY_ALIVE),
+			m_ptr(ptr)
+		{ }
+
+		Item<T...> operator*() const {
+			return *(*m_ptr)[Entity(
+					m_ptr->m_generation[m_index],
+					m_index)];
+		}
+
+		bool operator==(const Iterator &other) const {
+			return m_index == other.m_index
+				&& m_mask == other.m_mask;
+		}
+		bool operator!=(const Iterator &other) const {
+			return m_index != other.m_index
+				|| m_mask != other.m_mask;
+		}
+
+		Iterator& operator++() {
+			do {
+				m_index++;
+			} while (m_index < m_ptr->m_component.size()
+					&& (m_ptr->m_component[m_index] & m_mask) != m_mask);
+			return *this;
+		}
+
+	private:
+		std::size_t m_index;
+		const details::bitmask m_mask;
+		System<T...>*const m_ptr;
+	};
+
+	const Iterator begin() const {
+		size_t index = 0;
+		while (index < m_ptr->m_component.size()
+				&& (m_ptr->m_component[index] & details::ENTITY_ALIVE) != details::ENTITY_ALIVE) {
+			index++;
+		}
+
+		return Iterator(index, m_ptr);
+	}
+
+	const Iterator end() const {
+		return Iterator(m_ptr->m_component.size(), m_ptr);
+	}
+
+private:
+	System<T...>* m_ptr;
 };
 
 template <typename Data1, typename... DataN, typename... T>
