@@ -320,6 +320,23 @@ TEST_CASE("System Iterator<>", "[system]") {
 		if (sys.get<std::string>(ent[i]))
 			REQUIRE(*sys.get<std::string>(ent[i]) == "Beer & Pizza");
 	}
+
+	*sys.get<int>(ent[20]) = 99;
+	*sys.get<char>(ent[20]) = 'a';
+	*sys.get<std::string>(ent[20]) = "sentinel";
+	REQUIRE(*sys.get<int>(ent[20]) == 99);
+	REQUIRE(*sys.get<char>(ent[20]) == 'a');
+	REQUIRE(*sys.get<std::string>(ent[20]) == "sentinel");
+	sys.erase(ent[20]);
+
+	for (auto i : sys.iter()) {
+		if (i.get<int&>())
+			REQUIRE_FALSE(*i.get<int&>() == 99);
+		if (i.get<char&>())
+			REQUIRE_FALSE(*i.get<char&>() == 'a');
+		if (i.get<std::string&>())
+			REQUIRE_FALSE(*i.get<std::string&>() == "sentinel");
+	}
 }
 
 TEST_CASE("System Iterator<T...>", "[system]") {
@@ -384,5 +401,21 @@ TEST_CASE("System Iterator<T...>", "[system]") {
 		if (!sys.get<std::string>(e) && sys.get<char>(e))
 			REQUIRE(*sys.get<char>(ent[i]) == 'F');
 	}
+
+	*sys.get<int>(ent[10]) = 99;
+	*sys.get<char>(ent[10]) = 'a';
+	*sys.get<std::string>(ent[10]) = "sentinel";
+	REQUIRE(*sys.get<int>(ent[10]) == 99);
+	REQUIRE(*sys.get<char>(ent[10]) == 'a');
+	REQUIRE(*sys.get<std::string>(ent[10]) == "sentinel");
+	sys.erase(ent[10]);
+
+	index = 0;
+	for (auto [n] : sys.iter<int>())
+		REQUIRE_FALSE(n == 99);
+	for (auto [c] : sys.iter<char>())
+		REQUIRE_FALSE(c == 'a');
+	for (auto [s] : sys.iter<std::string>())
+		REQUIRE_FALSE(s == "sentinel");
 }
 
