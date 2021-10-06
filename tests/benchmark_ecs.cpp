@@ -2,19 +2,23 @@
 #include "catch.hpp"
 #include "ecs.hpp"
 
+#include <random>
 #include <string>
+#include <unordered_set>
 
 using namespace std;
 using namespace secs;
 
 struct Position {
 	float x, y, z;
+	Position& operator=(const Position&) = default;
 };
 struct Velocity {
 	float x, y, z;
+	Velocity& operator=(const Velocity&) = default;
 };
 
-#define TYPES int, string, Position, Velocity 
+#define TYPES int, uint, string, Position, Velocity 
 
 TEST_CASE("ComponentConfig Get Benchmark", "[benchmark][component]") {
 	ComponentConfig<
@@ -36,14 +40,12 @@ TEST_CASE("ComponentConfig Get Benchmark", "[benchmark][component]") {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	);
 
-	int i = 1;
 	BENCHMARK("cc.get<0>()") {
-		i = *cc.get<0>();
+		return *cc.get<0>();
 	};
 
-	int j = 1;
 	BENCHMARK("cc.get<49>()") {
-		j = *cc.get<49>();
+		return *cc.get<49>();
 	};
 };
 
@@ -59,7 +61,7 @@ TEST_CASE("System Make Benchmark", "[benchmark][system][make]") {
 		(Catch::Benchmark::Chronometer meter) {
 		System<> sys;
 		ComponentConfig<> cc;
-		for (int i = 0; i < 100; ++i)
+		for (int i = 0; i < 2100; ++i)
 			sys.make(cc);
 		meter.measure([&sys, &cc] { sys.make(cc); });
 	};
@@ -84,7 +86,7 @@ TEST_CASE("System Make Benchmark", "[benchmark][system][make]") {
 		(Catch::Benchmark::Chronometer meter) {
 		System<TYPES> sys;
 		ComponentConfig<TYPES> cc;
-		for (int i = 0; i < 100; ++i)
+		for (int i = 0; i < 2100; ++i)
 			sys.make(cc);
 		meter.measure([&sys, &cc] { sys.make(cc); });
 	};
@@ -121,33 +123,114 @@ TEST_CASE("System Get Benchmark", "[benchmark][system][get]") {
 	System<TYPES> sys;
 	ComponentConfig<TYPES> cc;
 	cc.get<0>() = 0;
-	cc.get<1>() = "Hello World";
-	cc.get<2>() = Position{ 1.1, -2.2, -3.3 };
-	cc.get<3>() = Velocity{ -1.1, 2.2, 3.14 };
+	cc.get<1>() = 10;
+	cc.get<2>() = "Hello World";
+	cc.get<3>() = Position{ 1.1, -2.2, -3.3 };
+	cc.get<4>() = Velocity{ -1.1, 2.2, 3.14 };
 
 	vector<Entity> ent;
 	for (int i = 0; i < 500; i++) {
 		ent.push_back(sys.make(cc));
 	}
 
-	int i0;
 	BENCHMARK("System::get<int>") {
-		i0 = *sys.get<int>(ent[30]);
+		return sys.get<0>(ent[30]);
 	};
-	string i1;
+	BENCHMARK("System::get<uint>") {
+		return sys.get<1>(ent[101]);
+	};
 	BENCHMARK("System::get<string>") {
-		i1 = *sys.get<string>(ent[7]);
+		return sys.get<2>(ent[7]);
 	};
-	Position i2;
 	BENCHMARK("System::get<Position>") {
-		i2 = *sys.get<Position>(ent[302]);
+		return sys.get<3>(ent[302]);
 	};
-	Velocity i3;
 	BENCHMARK("System::get<Velocity>") {
-		i3 = *sys.get<Velocity>(ent[420]);
+		return sys.get<4>(ent[420]);
 	};
-	Item<TYPES> i4;
 	BENCHMARK("System::get all") {
-		i4 = *sys[ent[169]];
+		return sys[ent[169]];
+	};
+};
+
+TEST_CASE("System Iteration Benchmark", "[benchmark][system][iteration]") {
+	auto rng = default_random_engine();
+	auto num_of_items = GENERATE(10, 100, 1000, 5000);
+	unordered_set<int> sparse_pack;
+	while (sparse_pack.size() < num_of_items * 0.2) {
+		sparse_pack.insert(rng() % num_of_items);
+	}
+
+	System<TYPES> sys;
+	ComponentConfig<TYPES> cc;
+	vector<Entity> ent;
+
+	for (auto i = 0; i < num_of_items; ++i) {
+		cc.get<int>() = i < .2 * num_of_items
+			? boost::make_optional(i)
+			: boost::none;
+		cc.get<uint>() = sparse_pack.count(i)
+			? boost::make_optional(i)
+			: boost::none;
+
+		cc.get<string>() = rng() % 100 < 50
+			? boost::make_optional("Hello World")
+			: boost::none;
+
+		cc.get<Position>() = rng() % 100 < 90
+			? boost::make_optional(Position{1, 2, 3})
+			: boost::none;
+
+		cc.get<Velocity>() = rng() % 100 < 90
+			? boost::make_optional(Velocity{3, 2, 1})
+			: boost::none;
+
+		ent.push_back(sys.make(cc));
+	}
+
+	auto name = "Iterate over "
+		+ to_string(num_of_items) + " items";
+	BENCHMARK(name.c_str()) {
+		for (auto item : sys.iter()) {
+			(void)(item);
+		}
+	};
+
+	name = "Iterate over Dense Packing of "
+		+ to_string(num_of_items / 5) + " ints";
+	BENCHMARK(name.c_str()) {
+		for (auto [i] : sys.iter<int>())
+			(void)(i);
+		return 0;
+	};
+
+	name = "Iterate over Sparse Packing of "
+		+ to_string(num_of_items / 5) + " ints";
+	BENCHMARK(name.c_str()) {
+		for (auto [i] : sys.iter<uint>())
+			(void)(i);
+		return 0;
+	};
+
+	BENCHMARK("Iterate over Position & Velocity with Filter & 81\% hit rate") {
+		auto count = 0;
+		for (auto [pos, vel] : sys.iter<Position, Velocity>()) {
+			(void)(pos);
+			(void)(vel);
+			count++;
+		}
+		return count;
+	};
+
+	BENCHMARK("Iterate over Position & Velocity with Item & 81\% hit rate") {
+		auto count = 0;
+		for (auto item : sys.iter()) {
+			if (item.get<Position&>() && item.get<Velocity&>()) {
+				(void)(item.get<Position&>());
+				(void)(item.get<Velocity&>());
+				count++;
+			}
+		}
+		return count;
 	};
 };

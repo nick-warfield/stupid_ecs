@@ -99,7 +99,7 @@ public:
 	}
 
 	void erase(const Entity& id) {
-		if (m_generation[id.index] != id.generation) return;
+		if (!is_alive(id)) return;
 		m_component[id.index] &= ~details::ENTITY_ALIVE;
 		m_next_alloc.push(id.index);
 	}

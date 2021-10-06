@@ -33,6 +33,12 @@ struct ComponentConfig<T, R...> {
 		item(value),
 		tail(other) { }
 
+	ComponentConfig(
+			T value,
+			R... rest) :
+		item(value),
+		tail(rest...) { }
+
 	template <uint Index>
 	auto& get() {
 		return details::GetIndex<Index, ComponentConfig<T, R...>>::get(*this);
@@ -46,6 +52,9 @@ struct ComponentConfig<T, R...> {
 	boost::optional<T> item;
 	ComponentConfig<R...> tail;
 };
+
+template <typename...T>
+ComponentConfig(T...) -> ComponentConfig<T...>;
 
 template <typename Head, typename... Tail>
 struct details::GetIndex<0, ComponentConfig<Head, Tail...>> {
