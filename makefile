@@ -12,7 +12,7 @@ TEST_DIR = tests
 CC = ccache clang++
 OPT = O2
 
-CFLAGS = -std=c++17 -$(OPT) -Wall -Wextra -Wno-missing-braces -DDEBUG
+CFLAGS = -std=c++20 -$(OPT) -Wall -Wextra -Wno-missing-braces -DDEBUG
 LDFLAGS =
 
 CFLAGS += -I$(INCLUDE_DIR) -I$(LIBRARY_DIR)
@@ -43,7 +43,11 @@ $(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.cpp $(HEADERS)
 $(BUILD_DIR)/$(BINARY_NAME): init-build $(OBJECTS)
 	$(CC) -o $@ $(OBJECTS) $(CFLAGS) $(LDFLAGS)
 
-$(TEST_DIR)/obj/%.o: $(TEST_DIR)/%.cpp $(HEADERS)
+modules/%.pcm: modules/%.cppm
+	$(CC) -fmodules-ts --precompile $< -o $@
+
+$(TEST_DIR)/obj/%.o: $(TEST_DIR)/%.cpp $(HEADERS) \
+	modules/ecs.pcm modules/entity.pcm modules/component.pcm modules/system.pcm modules/system_filter.pcm
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(TEST_DIR)/.test: init-tests $(TEST_OBJECTS)

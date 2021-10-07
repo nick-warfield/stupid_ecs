@@ -5,7 +5,7 @@
 #include <boost/optional/optional_io.hpp>
 
 #include "catch.hpp"
-#include "ecs.hpp"
+import stupid_ecs;
 
 using namespace secs;
 

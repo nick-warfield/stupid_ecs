@@ -1,10 +1,10 @@
-#define CATCH_CONFIG_ENABLE_BENCHMARKING
-#include "catch.hpp"
-#include "ecs.hpp"
-
 #include <random>
 #include <string>
 #include <unordered_set>
+
+#define CATCH_CONFIG_ENABLE_BENCHMARKING
+#include "catch.hpp"
+import stupid_ecs;
 
 using namespace std;
 using namespace secs;

@@ -1,10 +1,13 @@
-#pragma once
+module;
+
 #include <cstddef>
 #include <optional>
 
+export module stupid_ecs.entity;
+
 namespace secs {
 
-struct Entity {
+export struct Entity {
 	const std::size_t generation;
 	const std::size_t index;
 

@@ -1,16 +1,18 @@
-#pragma once
+module;
 
 #include <vector>
 #include <tuple>
 
-#include "system.hpp"
+export module stupid_ecs.system_filter;
+
+import stupid_ecs.system_filter;
 
 namespace secs {
 
-template <typename... U>
+export template <typename... U>
 struct Filter;
 
-template <typename... T>
+export template <typename... T>
 struct Filter<System<T...>> {
 	Filter(System<T...>& sys) : m_ptr(&sys) { }
 
@@ -80,7 +82,7 @@ private:
 	System<T...>* m_ptr;
 };
 
-template <typename Data1, typename... DataN, typename... T>
+export template <typename Data1, typename... DataN, typename... T>
 struct Filter<System<T...>, Data1, DataN...> {
 	Filter(System<T...>& sys) :
 		m_ptr(&sys),

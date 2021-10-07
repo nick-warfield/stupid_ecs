@@ -1,12 +1,14 @@
-#pragma once
+module;
 
 #include <vector>
 #include <stack>
 #include <memory>
 #include <boost/optional.hpp>
 
-#include "component.hpp"
-#include "entity.hpp"
+export module stupid_ecs.system;
+
+import stupid_ecs.component;
+import stupid_ecs.entity;
 
 namespace secs {
 
@@ -35,10 +37,10 @@ template <typename A, typename T>
 struct SystemGetType;
 }
 
-template<typename ...T>
+export template<typename ...T>
 using Item = ComponentConfig<T&...>;
 
-template <typename...>
+export template <typename...>
 struct Filter;
 
 template <>
@@ -53,7 +55,7 @@ struct details::SystemData<Head, Tail...> {
 	std::vector<U>& get_data();
 };
 
-template <typename... T>
+export template <typename... T>
 class System {
 	template <typename...>
 	friend struct Filter;
@@ -136,7 +138,7 @@ public:
 	}
 };
 
-template <>
+export template <>
 struct details::SystemHelper<details::SystemData<>> {
 	static details::bitmask make(
 			SystemData<> &,
@@ -153,7 +155,7 @@ struct details::SystemHelper<details::SystemData<>> {
 	}
 };
 
-template <typename Head, typename... Tail>
+export template <typename Head, typename... Tail>
 struct details::SystemHelper<details::SystemData<Head, Tail...>> {
 	static details::bitmask make(
 			SystemData<Head, Tail...> &data,

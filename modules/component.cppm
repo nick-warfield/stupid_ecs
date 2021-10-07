@@ -1,8 +1,10 @@
-#pragma once
+module;
 
 #include <fstream>
 #include <iostream>
 #include <boost/optional.hpp>
+
+export module stupid_ecs.component;
 
 namespace secs {
 
@@ -14,10 +16,10 @@ template<typename A, typename T>
 struct GetType;
 }
 
-template<typename...>
+export template<typename...>
 struct ComponentConfig { };
 
-template<typename T, typename... R>
+export template<typename T, typename... R>
 struct ComponentConfig<T, R...> {
 	ComponentConfig() :
 		item(boost::none),
@@ -53,7 +55,7 @@ struct ComponentConfig<T, R...> {
 	ComponentConfig<R...> tail;
 };
 
-template <typename...T>
+export template <typename...T>
 ComponentConfig(T...) -> ComponentConfig<T...>;
 
 template <typename Head, typename... Tail>
