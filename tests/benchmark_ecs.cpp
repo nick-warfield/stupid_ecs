@@ -191,25 +191,34 @@ TEST_CASE("System Iteration Benchmark", "[benchmark][system][iteration]") {
 	auto name = "Iterate over "
 		+ to_string(num_of_items) + " items";
 	BENCHMARK(name.c_str()) {
+		auto count = 0;
 		for (auto item : sys.iter()) {
 			(void)(item);
+			count++;
 		}
+		return count;
 	};
 
 	name = "Iterate over Dense Packing of "
 		+ to_string(num_of_items / 5) + " ints";
 	BENCHMARK(name.c_str()) {
-		for (auto [i] : sys.iter<int>())
+		auto count = 0;
+		for (auto [i] : sys.iter<int>()) {
 			(void)(i);
-		return 0;
+			count++;
+		}
+		return count;
 	};
 
 	name = "Iterate over Sparse Packing of "
 		+ to_string(num_of_items / 5) + " ints";
 	BENCHMARK(name.c_str()) {
-		for (auto [i] : sys.iter<uint>())
+		auto count = 0;
+		for (auto [i] : sys.iter<uint>()) {
 			(void)(i);
-		return 0;
+			count++;
+		}
+		return count;
 	};
 
 	BENCHMARK("Iterate over Position & Velocity with Filter & 81\% hit rate") {
