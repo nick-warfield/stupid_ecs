@@ -71,12 +71,12 @@ bench: $(TEST_DIR)/.test
 
 test: $(TEST_DIR)/.test
 	@unbuffer ./$(TEST_DIR)/.test ~'[benchmark]' $(RUN_ARGS) \
-		| tee tests/reports/test_result.txt
+		| tee tests/reports/report.txt
 	@llvm-cov gcov -o tests/obj tests/test_*.cpp -bcfp > /dev/null
 	@unbuffer gcovr -g -f src -f include \
 		--html-details tests/reports/html/coverage.html \
 		--json tests/reports/coverage.json \
-		--txt | tee tests/reports/coverage.txt
+		--txt | tee -a tests/reports/report.txt
 
 init-tests:
 	@[ -d $(TEST_DIR)/obj ] || mkdir -p $(TEST_DIR)/obj
