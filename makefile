@@ -44,7 +44,7 @@ $(BUILD_DIR)/$(BINARY_NAME): init-build $(OBJECTS)
 	$(CC) -o $@ $(OBJECTS) $(CFLAGS) -$(OPT) $(LDFLAGS)
 
 $(TEST_DIR)/obj/benchmark_%.o: $(TEST_DIR)/benchmark_%.cpp $(HEADERS)
-	$(CC) -c -o $@ $< $(CFLAGS) -O2
+	$(CC) -c -o $@ $< $(CFLAGS) -O3
 
 $(TEST_DIR)/obj/test_%.o: $(TEST_DIR)/test_%.cpp $(HEADERS)
 	$(CC) -c -o $@ $< $(CFLAGS) -O0 -g --coverage
