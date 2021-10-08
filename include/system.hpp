@@ -67,13 +67,6 @@ class System
 	std::vector<details::bitmask> m_component;
 	details::SystemData<T...> m_data;
 
-	template <uint Index>
-	auto &get_data()
-	{
-		return details::GetIndex<Index, details::SystemData<T...>>::get_data(
-				m_data);
-	}
-
 	template <typename Type>
 	auto &get_data()
 	{
@@ -213,11 +206,6 @@ struct details::SystemGetIndex<0, details::SystemData<Head, Tail...>> {
 		return bits & 1 ? boost::optional<Head &>(data.data[index])
 						: boost::none;
 	}
-
-	static std::vector<Head> &get_data(details::SystemData<Head, Tail...> &data)
-	{
-		return data.data;
-	}
 };
 
 template <uint Index, typename Head, typename... Tail>
@@ -231,12 +219,6 @@ struct details::SystemGetIndex<Index, details::SystemData<Head, Tail...>> {
 				data.tail,
 				bits >> 1,
 				index);
-	}
-
-	static auto &get_data(details::SystemData<Head, Tail...> &data)
-	{
-		return SystemGetIndex<Index - 1, SystemData<Tail...>>::get_data(
-				data.tail);
 	}
 };
 
