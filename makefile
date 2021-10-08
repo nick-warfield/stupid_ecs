@@ -12,7 +12,7 @@ TEST_DIR = tests
 CC = ccache clang++
 OPT = O2
 
-CFLAGS = -std=c++17 -$(OPT) -Wall -Wextra -Wno-missing-braces -DDEBUG
+CFLAGS = -std=c++17 -Wall -Wextra -Wno-missing-braces -DDEBUG
 LDFLAGS =
 
 CFLAGS += -I$(INCLUDE_DIR) -I$(LIBRARY_DIR)
@@ -38,18 +38,21 @@ else ifeq (test,$(firstword $(MAKECMDGOALS)))
 endif
 
 $(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.cpp $(HEADERS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) -$(OPT)
 
 $(BUILD_DIR)/$(BINARY_NAME): init-build $(OBJECTS)
-	$(CC) -o $@ $(OBJECTS) $(CFLAGS) $(LDFLAGS)
+	$(CC) -o $@ $(OBJECTS) $(CFLAGS) -$(OPT) $(LDFLAGS)
 
-$(TEST_DIR)/obj/%.o: $(TEST_DIR)/%.cpp $(HEADERS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+$(TEST_DIR)/obj/benchmark_%.o: $(TEST_DIR)/benchmark_%.cpp $(HEADERS)
+	$(CC) -c -o $@ $< $(CFLAGS) -O2
+
+$(TEST_DIR)/obj/test_%.o: $(TEST_DIR)/test_%.cpp $(HEADERS)
+	$(CC) -c -o $@ $< $(CFLAGS) -O0 -g --coverage
 
 $(TEST_DIR)/.test: init-tests $(TEST_OBJECTS)
-	$(CC) -o $@ $(TEST_OBJECTS) $(CFLAGS) $(LDFLAGS)
+	$(CC) -o $@ $(TEST_OBJECTS) $(CFLAGS) -O0 -g --coverage $(LDFLAGS)
 
-.PHONY: run clean test init-tests init-build all
+.PHONY: run clean test bench init-tests init-build all
 
 all: $(BUILD_DIR)/$(BINARY_NAME) $(TEST_DIR)/.test
 
@@ -62,11 +65,23 @@ clean:
 	@[ ! -d $(TEST_DIR)/obj ] || trash $(TEST_DIR)/obj
 	@[ ! -e $(TEST_DIR)/.test ] || trash $(TEST_DIR)/.test
 
+bench: $(TEST_DIR)/.test
+	@unbuffer ./$(TEST_DIR)/.test '[benchmark]' --benchmark-no-analysis \
+		| tee tests/reports/benchmark.txt
+
 test: $(TEST_DIR)/.test
-	@./$(TEST_DIR)/.test $(RUN_ARGS)
+	@unbuffer ./$(TEST_DIR)/.test ~'[benchmark]' $(RUN_ARGS) \
+		| tee tests/reports/test_result.txt
+	@llvm-cov gcov -o tests/obj tests/test_*.cpp -bcfp > /dev/null
+	@unbuffer gcovr -g -f src -f include \
+		--html-details tests/reports/html/coverage.html \
+		--json tests/reports/coverage.json \
+		--txt | tee tests/reports/coverage.txt
 
 init-tests:
 	@[ -d $(TEST_DIR)/obj ] || mkdir -p $(TEST_DIR)/obj
+	@[ -d $(TEST_DIR)/reports ] || mkdir -p $(TEST_DIR)/reports
+	@[ -d $(TEST_DIR)/reports/html ] || mkdir -p $(TEST_DIR)/reports/html
 
 init-build:
 	@[ -d $(OBJECT_DIR) ] || mkdir -p $(OBJECT_DIR)

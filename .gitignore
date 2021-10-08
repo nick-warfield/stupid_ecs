@@ -3,6 +3,7 @@ build
 src/obj
 tests/obj
 tests/.test
+tests/reports
 resources
 tags
 
