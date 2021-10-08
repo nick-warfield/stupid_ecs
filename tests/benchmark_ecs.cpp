@@ -126,11 +126,11 @@ TEST_CASE("System Get Benchmark", "[benchmark][system][get]")
 	vector<Entity> ent;
 	for (int i = 0; i < 500; i++) { ent.push_back(sys.make(cc)); }
 
-	BENCHMARK("System::get<int>") { return sys.get<0>(ent[30]); };
-	BENCHMARK("System::get<uint>") { return sys.get<1>(ent[101]); };
-	BENCHMARK("System::get<string>") { return sys.get<2>(ent[7]); };
-	BENCHMARK("System::get<Position>") { return sys.get<3>(ent[302]); };
-	BENCHMARK("System::get<Velocity>") { return sys.get<4>(ent[420]); };
+	BENCHMARK("System::get<int>") { return sys.get<int>(ent[30]); };
+	BENCHMARK("System::get<uint>") { return sys.get<uint>(ent[101]); };
+	BENCHMARK("System::get<string>") { return sys.get<string>(ent[7]); };
+	BENCHMARK("System::get<Position>") { return sys.get<Position>(ent[302]); };
+	BENCHMARK("System::get<Velocity>") { return sys.get<Velocity>(ent[420]); };
 	BENCHMARK("System::get all") { return sys[ent[169]]; };
 };
 

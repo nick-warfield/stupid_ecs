@@ -30,9 +30,6 @@ namespace details
 	template <typename... T>
 	struct SystemData;
 
-	template <uint I, typename T>
-	struct SystemGetIndex;
-
 	template <typename A, typename T>
 	struct SystemGetType;
 }  // namespace details
@@ -117,16 +114,6 @@ class System
 				id.index);
 	}
 
-	template <uint Index>
-	auto get(const Entity &id)
-	{
-		return is_alive(id) ? details::SystemGetIndex<
-					   Index,
-					   details::SystemData<T...>>::
-							   get(m_data, m_component[id.index], id.index)
-							: boost::none;
-	}
-
 	template <typename Type>
 	auto get(const Entity &id)
 	{
@@ -193,32 +180,6 @@ struct details::SystemHelper<details::SystemData<Head, Tail...>> {
                 bits >> 1,
                 index);
 		return Item<Head, Tail...>(value, tail);
-	}
-};
-
-template <typename Head, typename... Tail>
-struct details::SystemGetIndex<0, details::SystemData<Head, Tail...>> {
-	static boost::optional<Head &> get(
-			details::SystemData<Head, Tail...> &data,
-			const details::bitmask &bits,
-			const std::size_t &index)
-	{
-		return bits & 1 ? boost::optional<Head &>(data.data[index])
-						: boost::none;
-	}
-};
-
-template <uint Index, typename Head, typename... Tail>
-struct details::SystemGetIndex<Index, details::SystemData<Head, Tail...>> {
-	static auto get(
-			details::SystemData<Head, Tail...> &data,
-			const details::bitmask &bits,
-			const std::size_t &index)
-	{
-		return SystemGetIndex<Index - 1, SystemData<Tail...>>::get(
-				data.tail,
-				bits >> 1,
-				index);
 	}
 };
 
