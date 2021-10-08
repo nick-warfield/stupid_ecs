@@ -24,16 +24,30 @@ namespace details
 			vec[index] = item;
 	}
 
-	template <typename T>
-	struct SystemHelper;
-
 	template <typename... T>
 	struct SystemData;
 
+	template <typename T>
+	struct SystemHelper {
+		// unrolls SystemData & ComponentConfig to write Components to SystemData
+		// additionally, generates bitmask based on given Components
+		template <typename... U>
+		static bitmask make(
+				SystemData<U...>&,
+				const ComponentConfig<U...>&,
+				const size_t&);
+
+		template <typename... U>
+		static auto& get(SystemData<U...>&, const bitmask&, const size_t&);
+	};
+
+	// unrolls SystemData until it matches A
 	template <typename A, typename T>
-	struct SystemGetType;
+	struct SystemGetter;
 }  // namespace details
 
+// just used as the output of system[entity]
+// probably makes more sense to just return a tuple
 template <typename... T>
 using Item = ComponentConfig<T &...>;
 
@@ -43,7 +57,6 @@ struct Filter;
 template <>
 struct details::SystemData<> {
 };
-
 template <typename Head, typename... Tail>
 struct details::SystemData<Head, Tail...> {
 	std::vector<Head> data;
@@ -117,12 +130,12 @@ class System
 	template <typename Type>
 	auto get(const Entity &id)
 	{
-		return is_alive(id) ? details::
-							   SystemGetType<Type, details::SystemData<T...>>::
-									   get(m_data,
-										   m_component[id.index],
-										   id.index)
-							: boost::none;
+		return is_alive(id) 
+			? details::SystemGetter<Type, details::SystemData<T...>>::get(
+					m_data,
+				    m_component[id.index],
+				    id.index)
+			: boost::none;
 	}
 
 	template <typename... U>
@@ -159,13 +172,13 @@ struct details::SystemHelper<details::SystemData<Head, Tail...>> {
 			const ComponentConfig<Head, Tail...> &cc,
 			const size_t &index)
 	{
-		assign_or_push(data.data, cc.item.value_or(Head()), index);
-		auto b = SystemHelper<SystemData<Tail...>>::make(
+		auto mask = SystemHelper<SystemData<Tail...>>::make(
 						 data.tail,
 						 cc.tail,
 						 index)
 				 << 1;
-		return b | cc.item.has_value();
+		assign_or_push(data.data, cc.item.value_or(Head()), index);
+		return mask | cc.item.has_value();
 	}
 
 	static Item<Head, Tail...> get(
@@ -183,8 +196,9 @@ struct details::SystemHelper<details::SystemData<Head, Tail...>> {
 	}
 };
 
+// base case, Type == Head
 template <typename Head, typename... Tail>
-struct details::SystemGetType<Head, details::SystemData<Head, Tail...>> {
+struct details::SystemGetter<Head, details::SystemData<Head, Tail...>> {
 	static auto get(
 			details::SystemData<Head, Tail...> &data,
 			const details::bitmask &bits,
@@ -206,13 +220,13 @@ struct details::SystemGetType<Head, details::SystemData<Head, Tail...>> {
 };
 
 template <typename Type, typename Head, typename... Tail>
-struct details::SystemGetType<Type, details::SystemData<Head, Tail...>> {
+struct details::SystemGetter<Type, details::SystemData<Head, Tail...>> {
 	static auto get(
 			details::SystemData<Head, Tail...> &data,
 			const details::bitmask &bits,
 			const std::size_t &index)
 	{
-		return SystemGetType<Type, SystemData<Tail...>>::get(
+		return SystemGetter<Type, SystemData<Tail...>>::get(
 				data.tail,
 				bits >> 1,
 				index);
@@ -220,13 +234,13 @@ struct details::SystemGetType<Type, details::SystemData<Head, Tail...>> {
 
 	static std::vector<Type> &get_data(details::SystemData<Head, Tail...> &data)
 	{
-		return SystemGetType<Type, SystemData<Tail...>>::get_data(data.tail);
+		return SystemGetter<Type, SystemData<Tail...>>::get_data(data.tail);
 	}
 
 	static details::bitmask get_flag(
 			const details::SystemData<Head, Tail...> &data)
 	{
-		return SystemGetType<Type, SystemData<Tail...>>::get_flag(data.tail)
+		return SystemGetter<Type, SystemData<Tail...>>::get_flag(data.tail)
 			   << 1;
 	}
 };

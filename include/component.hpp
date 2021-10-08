@@ -11,6 +11,7 @@ namespace details
 	template <uint I, typename T>
 	struct GetIndex;
 
+	// could just add another specialization to SystemGetter instead of this
 	template <typename A, typename T>
 	struct GetType;
 }  // namespace details

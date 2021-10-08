@@ -14,11 +14,13 @@ template <typename... T>
 struct Filter<System<T...>> {
 	Filter(System<T...> &sys) : m_ptr(&sys) {}
 
+	// this should really be a part of SystemHelper
 	static details::bitmask mask(details::SystemData<T...> &)
 	{
 		return details::ENTITY_ALIVE;
 	}
 
+	// this should really be a part of SystemHelper
 	static std::tuple<> get(details::SystemData<T...> &, const size_t &)
 	{
 		return std::make_tuple<>();
@@ -90,19 +92,21 @@ struct Filter<System<T...>, Data1, DataN...> {
 	{
 	}
 
+	// this should really be a part of SystemHelper
 	static details::bitmask mask(details::SystemData<T...> &data)
 	{
-		return details::SystemGetType<Data1, details::SystemData<T...>>::
+		return details::SystemGetter<Data1, details::SystemData<T...>>::
 					   get_flag(data)
 			   | Filter<System<T...>, DataN...>::mask(data);
 	}
 
+	// this should really be a part of SystemHelper
 	static std::tuple<Data1 &, DataN &...> get(
 			details::SystemData<T...> &data,
 			const size_t index)
 	{
 		return std::tuple_cat(
-				std::tuple<Data1 &>(details::SystemGetType<
+				std::tuple<Data1 &>(details::SystemGetter<
 									Data1,
 									details::SystemData<T...>>::get_data(data)
 											[index]),
