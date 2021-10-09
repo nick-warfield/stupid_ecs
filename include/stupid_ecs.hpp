@@ -149,8 +149,8 @@ class System
 
 		detail::SystemHelper<detail::SystemData<T...>>::write(cc, m_data, next);
 
-		auto mask = detail::SystemHelper<detail::SystemData<T...>>::get_mask(
-				cc);
+		auto mask =
+				detail::SystemHelper<detail::SystemData<T...>>::get_mask(cc);
 		detail::assign_or_push<detail::bitmask>(
 				m_component,
 				detail::ENTITY_ALIVE | mask,
@@ -381,11 +381,9 @@ namespace detail
 
 	template <typename Head, typename... Tail>
 	struct SystemHelper<SystemData<Head, Tail...>> {
-		static bitmask get_mask(
-				ComponentConfig<Head, Tail...> &cc)
+		static bitmask get_mask(ComponentConfig<Head, Tail...> &cc)
 		{
-			auto mask = SystemHelper<SystemData<Tail...>>::get_mask(
-					cc.tail);
+			auto mask = SystemHelper<SystemData<Tail...>>::get_mask(cc.tail);
 			return mask << 1 | cc.item.has_value();
 		}
 
