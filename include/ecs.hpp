@@ -7,19 +7,80 @@
 
 namespace secs
 {
+struct Entity;
+
+template <typename...>
+struct ComponentConfig;
+
+template <typename... T>
+ComponentConfig(T...) -> ComponentConfig<T...>;
+
+// just used as the output of system[entity]
+// probably makes more sense to just return a tuple
+template <typename... T>
+using Item = ComponentConfig<T &...>;
+
+template <typename...>
+class System;
+
+template <typename...>
+struct Filter;
+
 namespace details
 {
+	using bitmask              = uint16_t;
+	const bitmask ENTITY_ALIVE = 0b1000000000000000;
+
 	template <uint I, typename T>
 	struct GetIndex;
 
 	// could just add another specialization to SystemGetter instead of this
 	template <typename A, typename T>
 	struct GetType;
+
+	template <typename T>
+	void assign_or_push(std::vector<T> &vec, T item, size_t index)
+	{
+		if (index >= vec.size())
+			vec.push_back(item);
+		else
+			vec[index] = item;
+	}
+
+	template <typename... T>
+	struct SystemData;
+	template <>
+	struct SystemData<> {
+	};
+	template <typename Head, typename... Tail>
+	struct SystemData<Head, Tail...> {
+		std::vector<Head> data;
+		SystemData<Tail...> tail;
+
+		// should be in SystemGetter
+		template <typename U>
+		std::vector<U> &get_data();
+	};
+
+	template <typename T>
+	struct SystemHelper {
+		// unrolls SystemData & ComponentConfig to write Components to SystemData
+		// additionally, generates bitmask based on given Components
+		template <typename... U>
+		static bitmask make(
+				SystemData<U...>&,
+				const ComponentConfig<U...>&,
+				const size_t&);
+
+		template <typename... U>
+		static auto& get(SystemData<U...>&, const bitmask&, const size_t&);
+	};
+
+	// unrolls SystemData until it matches A
+	template <typename A, typename T>
+	struct SystemGetter;
 }  // namespace details
 
-template <typename...>
-struct ComponentConfig {
-};
 struct Entity {
 	const std::size_t generation;
 	const std::size_t index;
@@ -44,6 +105,8 @@ struct Entity {
 	}
 };
 
+template <>
+struct ComponentConfig<> { };
 template <typename T, typename... R>
 struct ComponentConfig<T, R...> {
 	ComponentConfig() : item(boost::none), tail() {}
@@ -78,97 +141,6 @@ struct ComponentConfig<T, R...> {
 
 	boost::optional<T> item;
 	ComponentConfig<R...> tail;
-};
-
-template <typename... T>
-ComponentConfig(T...) -> ComponentConfig<T...>;
-
-template <typename Head, typename... Tail>
-struct details::GetIndex<0, ComponentConfig<Head, Tail...>> {
-	static boost::optional<Head> &get(ComponentConfig<Head, Tail...> &cc)
-	{
-		return cc.item;
-	}
-};
-
-template <uint Index, typename Head, typename... Tail>
-struct details::GetIndex<Index, ComponentConfig<Head, Tail...>> {
-	static auto &get(ComponentConfig<Head, Tail...> &cc)
-	{
-		return GetIndex<Index - 1, ComponentConfig<Tail...>>::get(cc.tail);
-	}
-};
-
-template <typename Head, typename... Tail>
-struct details::GetType<Head, ComponentConfig<Head, Tail...>> {
-	static boost::optional<Head> &get(ComponentConfig<Head, Tail...> &cc)
-	{
-		return cc.item;
-	}
-};
-
-template <typename Type, typename Head, typename... Tail>
-struct details::GetType<Type, ComponentConfig<Head, Tail...>> {
-	static auto &get(ComponentConfig<Head, Tail...> &cc)
-	{
-		return GetType<Type, ComponentConfig<Tail...>>::get(cc.tail);
-	}
-};
-
-namespace details
-{
-	using bitmask              = uint16_t;
-	const bitmask ENTITY_ALIVE = 0b1000000000000000;
-
-	template <typename T>
-	void assign_or_push(std::vector<T> &vec, T item, size_t index)
-	{
-		if (index >= vec.size())
-			vec.push_back(item);
-		else
-			vec[index] = item;
-	}
-
-	template <typename... T>
-	struct SystemData;
-
-	template <typename T>
-	struct SystemHelper {
-		// unrolls SystemData & ComponentConfig to write Components to SystemData
-		// additionally, generates bitmask based on given Components
-		template <typename... U>
-		static bitmask make(
-				SystemData<U...>&,
-				const ComponentConfig<U...>&,
-				const size_t&);
-
-		template <typename... U>
-		static auto& get(SystemData<U...>&, const bitmask&, const size_t&);
-	};
-
-	// unrolls SystemData until it matches A
-	template <typename A, typename T>
-	struct SystemGetter;
-}  // namespace details
-
-// just used as the output of system[entity]
-// probably makes more sense to just return a tuple
-template <typename... T>
-using Item = ComponentConfig<T &...>;
-
-template <typename...>
-struct Filter;
-
-template <>
-struct details::SystemData<> {
-};
-template <typename Head, typename... Tail>
-struct details::SystemData<Head, Tail...> {
-	std::vector<Head> data;
-	SystemData<Tail...> tail;
-
-	template <typename U>
-	std::vector<U> &get_data();
 };
 
 template <typename... T>
@@ -255,103 +227,6 @@ class System
 			   && m_component[id.index] & details::ENTITY_ALIVE;
 	}
 };
-
-template <>
-struct details::SystemHelper<details::SystemData<>> {
-	static details::bitmask
-	make(SystemData<> &, const ComponentConfig<> &, const size_t &)
-	{
-		return 0;
-	}
-
-	static Item<> get(SystemData<> &, const details::bitmask &, const size_t &)
-	{
-		return Item<>();
-	}
-};
-
-template <typename Head, typename... Tail>
-struct details::SystemHelper<details::SystemData<Head, Tail...>> {
-	static details::bitmask make(
-			SystemData<Head, Tail...> &data,
-			const ComponentConfig<Head, Tail...> &cc,
-			const size_t &index)
-	{
-		auto mask = SystemHelper<SystemData<Tail...>>::make(
-						 data.tail,
-						 cc.tail,
-						 index)
-				 << 1;
-		assign_or_push(data.data, cc.item.value_or(Head()), index);
-		return mask | cc.item.has_value();
-	}
-
-	static Item<Head, Tail...> get(
-			SystemData<Head, Tail...> &data,
-			const details::bitmask &bits,
-			const size_t &index)
-	{
-		auto value = bits & 1 ? boost::optional<Head &>(data.data[index])
-							  : boost::none;
-		auto tail  = SystemHelper<SystemData<Tail...>>::get(
-                data.tail,
-                bits >> 1,
-                index);
-		return Item<Head, Tail...>(value, tail);
-	}
-};
-
-// base case, Type == Head
-template <typename Head, typename... Tail>
-struct details::SystemGetter<Head, details::SystemData<Head, Tail...>> {
-	static auto get(
-			details::SystemData<Head, Tail...> &data,
-			const details::bitmask &bits,
-			const std::size_t &index)
-	{
-		return bits & 1 ? boost::optional<Head &>(data.data[index])
-						: boost::none;
-	}
-
-	static std::vector<Head> &get_data(details::SystemData<Head, Tail...> &data)
-	{
-		return data.data;
-	}
-
-	static details::bitmask get_flag(const details::SystemData<Head, Tail...> &)
-	{
-		return 1;
-	}
-};
-
-template <typename Type, typename Head, typename... Tail>
-struct details::SystemGetter<Type, details::SystemData<Head, Tail...>> {
-	static auto get(
-			details::SystemData<Head, Tail...> &data,
-			const details::bitmask &bits,
-			const std::size_t &index)
-	{
-		return SystemGetter<Type, SystemData<Tail...>>::get(
-				data.tail,
-				bits >> 1,
-				index);
-	}
-
-	static std::vector<Type> &get_data(details::SystemData<Head, Tail...> &data)
-	{
-		return SystemGetter<Type, SystemData<Tail...>>::get_data(data.tail);
-	}
-
-	static details::bitmask get_flag(
-			const details::SystemData<Head, Tail...> &data)
-	{
-		return SystemGetter<Type, SystemData<Tail...>>::get_flag(data.tail)
-			   << 1;
-	}
-};
-
-template <typename... U>
-struct Filter;
 
 template <typename... T>
 struct Filter<System<T...>> {
@@ -514,6 +389,132 @@ struct Filter<System<T...>, Data1, DataN...> {
    private:
 	System<T...> *const m_ptr;
 	const details::bitmask m_mask;
+};
+
+template <>
+struct details::SystemHelper<details::SystemData<>> {
+	static details::bitmask
+	make(SystemData<> &, const ComponentConfig<> &, const size_t &)
+	{
+		return 0;
+	}
+
+	static Item<> get(SystemData<> &, const details::bitmask &, const size_t &)
+	{
+		return Item<>();
+	}
+};
+
+template <typename Head, typename... Tail>
+struct details::SystemHelper<details::SystemData<Head, Tail...>> {
+	static details::bitmask make(
+			SystemData<Head, Tail...> &data,
+			const ComponentConfig<Head, Tail...> &cc,
+			const size_t &index)
+	{
+		auto mask = SystemHelper<SystemData<Tail...>>::make(
+						 data.tail,
+						 cc.tail,
+						 index)
+				 << 1;
+		assign_or_push(data.data, cc.item.value_or(Head()), index);
+		return mask | cc.item.has_value();
+	}
+
+	static Item<Head, Tail...> get(
+			SystemData<Head, Tail...> &data,
+			const details::bitmask &bits,
+			const size_t &index)
+	{
+		auto value = bits & 1 ? boost::optional<Head &>(data.data[index])
+							  : boost::none;
+		auto tail  = SystemHelper<SystemData<Tail...>>::get(
+                data.tail,
+                bits >> 1,
+                index);
+		return Item<Head, Tail...>(value, tail);
+	}
+};
+
+// base case, Type == Head
+template <typename Head, typename... Tail>
+struct details::SystemGetter<Head, details::SystemData<Head, Tail...>> {
+	static auto get(
+			details::SystemData<Head, Tail...> &data,
+			const details::bitmask &bits,
+			const std::size_t &index)
+	{
+		return bits & 1 ? boost::optional<Head &>(data.data[index])
+						: boost::none;
+	}
+
+	static std::vector<Head> &get_data(details::SystemData<Head, Tail...> &data)
+	{
+		return data.data;
+	}
+
+	static details::bitmask get_flag(const details::SystemData<Head, Tail...> &)
+	{
+		return 1;
+	}
+};
+
+template <typename Type, typename Head, typename... Tail>
+struct details::SystemGetter<Type, details::SystemData<Head, Tail...>> {
+	static auto get(
+			details::SystemData<Head, Tail...> &data,
+			const details::bitmask &bits,
+			const std::size_t &index)
+	{
+		return SystemGetter<Type, SystemData<Tail...>>::get(
+				data.tail,
+				bits >> 1,
+				index);
+	}
+
+	static std::vector<Type> &get_data(details::SystemData<Head, Tail...> &data)
+	{
+		return SystemGetter<Type, SystemData<Tail...>>::get_data(data.tail);
+	}
+
+	static details::bitmask get_flag(
+			const details::SystemData<Head, Tail...> &data)
+	{
+		return SystemGetter<Type, SystemData<Tail...>>::get_flag(data.tail)
+			   << 1;
+	}
+};
+
+template <typename Head, typename... Tail>
+struct details::GetIndex<0, ComponentConfig<Head, Tail...>> {
+	static boost::optional<Head> &get(ComponentConfig<Head, Tail...> &cc)
+	{
+		return cc.item;
+	}
+};
+
+template <uint Index, typename Head, typename... Tail>
+struct details::GetIndex<Index, ComponentConfig<Head, Tail...>> {
+	static auto &get(ComponentConfig<Head, Tail...> &cc)
+	{
+		return GetIndex<Index - 1, ComponentConfig<Tail...>>::get(cc.tail);
+	}
+};
+
+template <typename Head, typename... Tail>
+struct details::GetType<Head, ComponentConfig<Head, Tail...>> {
+	static boost::optional<Head> &get(ComponentConfig<Head, Tail...> &cc)
+	{
+		return cc.item;
+	}
+};
+
+template <typename Type, typename Head, typename... Tail>
+struct details::GetType<Type, ComponentConfig<Head, Tail...>> {
+	static auto &get(ComponentConfig<Head, Tail...> &cc)
+	{
+		return GetType<Type, ComponentConfig<Tail...>>::get(cc.tail);
+	}
 };
 
 }  // namespace secs
