@@ -40,10 +40,6 @@ namespace detail
 	struct SystemData<Head, Tail...> {
 		std::vector<Head> data;
 		SystemData<Tail...> tail;
-
-		// should be in SystemGetter
-		template <typename U>
-		std::vector<U> &get_data();
 	};
 
 	template <typename T>
