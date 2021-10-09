@@ -4,7 +4,7 @@
 #include <unordered_set>
 
 #include "catch.hpp"
-#include "ecs.hpp"
+#include "stupid_ecs.hpp"
 
 using namespace std;
 using namespace secs;

@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "catch.hpp"
-#include "ecs.hpp"
+#include "stupid_ecs.hpp"
 
 using namespace secs;
 
