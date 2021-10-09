@@ -136,7 +136,7 @@ class System
 	detail::SystemData<T...> m_data;
 
    public:
-	Entity make(ComponentConfig<T...> &cc)
+	Entity make(const ComponentConfig<T...> &cc)
 	{
 		auto next = m_generation.size();
 		if (!m_next_alloc.empty()) {
@@ -191,10 +191,10 @@ class System
 	template <typename... U>
 	auto iter()
 	{
-		return Filter<System<T...>, U...>(*this);
+		return Filter<System<T...>, U...>(this);
 	}
 
-	bool is_alive(const Entity &id)
+	bool is_alive(const Entity &id) const
 	{
 		return m_generation[id.index] == id.generation
 			   && m_component[id.index] & detail::ENTITY_ALIVE;
@@ -203,10 +203,10 @@ class System
 
 template <typename... T>
 struct Filter<System<T...>> {
-	Filter(System<T...> &sys) : m_ptr(&sys) {}
+	Filter(System<T...> *sys) : m_ptr(sys) {}
 
 	// this should really be a part of SystemHelper
-	static detail::bitmask mask(detail::SystemData<T...> &)
+	static detail::bitmask mask(const detail::SystemData<T...> &)
 	{
 		return detail::ENTITY_ALIVE;
 	}
@@ -272,19 +272,19 @@ struct Filter<System<T...>> {
 	}
 
    private:
-	System<T...> *m_ptr;
+	System<T...> *const m_ptr;
 };
 
 template <typename Data1, typename... DataN, typename... T>
 struct Filter<System<T...>, Data1, DataN...> {
-	Filter(System<T...> &sys) :
-		m_ptr(&sys),
-		m_mask(Filter<System<T...>, Data1, DataN...>::mask(sys.m_data))
+	Filter(System<T...> *sys) :
+		m_ptr(sys),
+		m_mask(Filter<System<T...>, Data1, DataN...>::mask(sys->m_data))
 	{
 	}
 
 	// this should really be a part of SystemHelper
-	static detail::bitmask mask(detail::SystemData<T...> &data)
+	static detail::bitmask mask(const detail::SystemData<T...> &data)
 	{
 		return detail::GetType<Data1, detail::SystemData<T...>>::get_flag(data)
 			   | Filter<System<T...>, DataN...>::mask(data);
@@ -366,7 +366,7 @@ namespace detail
 {
 	template <>
 	struct SystemHelper<SystemData<>> {
-		static bitmask get_mask(ComponentConfig<> &) { return 0; }
+		static bitmask get_mask(const ComponentConfig<> &) { return 0; }
 
 		static void
 		write(const ComponentConfig<> &, SystemData<> &, const size_t &)
@@ -381,7 +381,7 @@ namespace detail
 
 	template <typename Head, typename... Tail>
 	struct SystemHelper<SystemData<Head, Tail...>> {
-		static bitmask get_mask(ComponentConfig<Head, Tail...> &cc)
+		static bitmask get_mask(const ComponentConfig<Head, Tail...> &cc)
 		{
 			auto mask = SystemHelper<SystemData<Tail...>>::get_mask(cc.tail);
 			return mask << 1 | cc.item.has_value();
