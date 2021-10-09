@@ -19,9 +19,7 @@ Usage:
 	* Item changes
 		* Not sure if Item needs to exsist
 		* If it should exsist, it needs to be System::Item
-* Autoformat (things could be prettier and more legible)
 * Consolidate static Get Helpers
-* constexpr and other optimizations
 * User defined max number of components
 	* prolly need some #ifdefs to accomplish this
 * Multi-Threading:
