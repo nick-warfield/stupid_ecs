@@ -58,16 +58,7 @@ namespace detail
 	struct GetType;
 
 	template <typename T>
-	struct SystemHelper {
-		// unrolls SystemData & ComponentConfig to write Components to
-		// SystemData additionally, generates bitmask based on given Components
-		template <typename... U>
-		static bitmask
-		make(SystemData<U...> &, const ComponentConfig<U...> &, const size_t &);
-
-		template <typename... U>
-		static auto &get(SystemData<U...> &, const bitmask &, const size_t &);
-	};
+	struct SystemHelper;
 }  // namespace detail
 
 struct Entity {
@@ -156,14 +147,13 @@ class System
 			m_generation.push_back(0);
 		}
 
-		auto flags = detail::SystemHelper<detail::SystemData<T...>>::make(
-				m_data,
-				cc,
-				next);
+		detail::SystemHelper<detail::SystemData<T...>>::write(cc, m_data, next);
 
+		auto mask = detail::SystemHelper<detail::SystemData<T...>>::get_mask(
+				cc);
 		detail::assign_or_push<detail::bitmask>(
 				m_component,
-				detail::ENTITY_ALIVE | flags,
+				detail::ENTITY_ALIVE | mask,
 				next);
 
 		return Entity(m_generation[next], next);
@@ -181,7 +171,7 @@ class System
 	{
 		if (!is_alive(id))
 			return {};
-		return detail::SystemHelper<detail::SystemData<T...>>::get(
+		return detail::SystemHelper<detail::SystemData<T...>>::get_item(
 				m_data,
 				m_component[id.index],
 				id.index);
@@ -376,13 +366,14 @@ namespace detail
 {
 	template <>
 	struct SystemHelper<SystemData<>> {
-		static bitmask
-		make(SystemData<> &, const ComponentConfig<> &, const size_t &)
+		static bitmask get_mask(ComponentConfig<> &) { return 0; }
+
+		static void
+		write(const ComponentConfig<> &, SystemData<> &, const size_t &)
 		{
-			return 0;
 		}
 
-		static Item<> get(SystemData<> &, const bitmask &, const size_t &)
+		static Item<> get_item(SystemData<> &, const bitmask &, const size_t &)
 		{
 			return Item<>();
 		}
@@ -390,28 +381,31 @@ namespace detail
 
 	template <typename Head, typename... Tail>
 	struct SystemHelper<SystemData<Head, Tail...>> {
-		static bitmask make(
-				SystemData<Head, Tail...> &data,
-				const ComponentConfig<Head, Tail...> &cc,
-				const size_t &index)
+		static bitmask get_mask(
+				ComponentConfig<Head, Tail...> &cc)
 		{
-			auto mask = SystemHelper<SystemData<Tail...>>::make(
-								data.tail,
-								cc.tail,
-								index)
-						<< 1;
-			assign_or_push(data.data, cc.item.value_or(Head()), index);
-			return mask | cc.item.has_value();
+			auto mask = SystemHelper<SystemData<Tail...>>::get_mask(
+					cc.tail);
+			return mask << 1 | cc.item.has_value();
 		}
 
-		static Item<Head, Tail...> get(
+		static void write(
+				const ComponentConfig<Head, Tail...> &cc,
+				SystemData<Head, Tail...> &data,
+				const size_t &index)
+		{
+			assign_or_push(data.data, cc.item.value_or(Head()), index);
+			SystemHelper<SystemData<Tail...>>::write(cc.tail, data.tail, index);
+		}
+
+		static Item<Head, Tail...> get_item(
 				SystemData<Head, Tail...> &data,
 				const bitmask &bits,
 				const size_t &index)
 		{
 			auto value = bits & 1 ? boost::optional<Head &>(data.data[index])
 								  : boost::none;
-			auto tail  = SystemHelper<SystemData<Tail...>>::get(
+			auto tail  = SystemHelper<SystemData<Tail...>>::get_item(
                     data.tail,
                     bits >> 1,
                     index);
