@@ -144,13 +144,6 @@ class System
 	std::vector<detail::bitmask> m_component;
 	detail::SystemData<T...> m_data;
 
-	template <typename Type>
-	auto &get_data()
-	{
-		return detail::GetType<Type, detail::SystemData<T...>>::get_data(
-				m_data);
-	}
-
    public:
 	Entity make(ComponentConfig<T...> &cc)
 	{
@@ -198,8 +191,10 @@ class System
 	auto get(const Entity &id)
 	{
 		return is_alive(id)
-					   ? detail::GetType<Type, detail::SystemData<T...>>::
-							   get(m_data, m_component[id.index], id.index)
+					   ? detail::GetType<Type, detail::SystemData<T...>>::get(
+							   m_data,
+							   m_component[id.index],
+							   id.index)
 					   : boost::none;
 	}
 
@@ -301,8 +296,7 @@ struct Filter<System<T...>, Data1, DataN...> {
 	// this should really be a part of SystemHelper
 	static detail::bitmask mask(detail::SystemData<T...> &data)
 	{
-		return detail::GetType<Data1, detail::SystemData<T...>>::get_flag(
-					   data)
+		return detail::GetType<Data1, detail::SystemData<T...>>::get_flag(data)
 			   | Filter<System<T...>, DataN...>::mask(data);
 	}
 
@@ -496,8 +490,7 @@ namespace detail
 
 		static bitmask get_flag(const SystemData<Head, Tail...> &data)
 		{
-			return GetType<Type, SystemData<Tail...>>::get_flag(data.tail)
-				   << 1;
+			return GetType<Type, SystemData<Tail...>>::get_flag(data.tail) << 1;
 		}
 	};
 
