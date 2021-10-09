@@ -58,7 +58,6 @@ namespace detail
 	template <uint I, typename T>
 	struct GetIndex;
 
-	// could just add another specialization to SystemGetter instead of this
 	template <typename A, typename T>
 	struct GetType;
 
@@ -73,10 +72,6 @@ namespace detail
 		template <typename... U>
 		static auto &get(SystemData<U...> &, const bitmask &, const size_t &);
 	};
-
-	// unrolls SystemData until it matches A
-	template <typename A, typename T>
-	struct SystemGetter;
 }  // namespace detail
 
 struct Entity {
@@ -207,7 +202,7 @@ class System
 	auto get(const Entity &id)
 	{
 		return is_alive(id)
-					   ? detail::SystemGetter<Type, detail::SystemData<T...>>::
+					   ? detail::GetType<Type, detail::SystemData<T...>>::
 							   get(m_data, m_component[id.index], id.index)
 					   : boost::none;
 	}
@@ -310,7 +305,7 @@ struct Filter<System<T...>, Data1, DataN...> {
 	// this should really be a part of SystemHelper
 	static detail::bitmask mask(detail::SystemData<T...> &data)
 	{
-		return detail::SystemGetter<Data1, detail::SystemData<T...>>::get_flag(
+		return detail::GetType<Data1, detail::SystemData<T...>>::get_flag(
 					   data)
 			   | Filter<System<T...>, DataN...>::mask(data);
 	}
@@ -322,7 +317,7 @@ struct Filter<System<T...>, Data1, DataN...> {
 	{
 		return std::tuple_cat(
 				std::tuple<Data1 &>(
-						detail::SystemGetter<Data1, detail::SystemData<T...>>::
+						detail::GetType<Data1, detail::SystemData<T...>>::
 								get_data(data)[index]),
 				Filter<System<T...>, DataN...>::get(data, index));
 	}
@@ -434,51 +429,6 @@ namespace detail
 		}
 	};
 
-	// base case, Type == Head
-	template <typename Head, typename... Tail>
-	struct SystemGetter<Head, SystemData<Head, Tail...>> {
-		static auto get(
-				SystemData<Head, Tail...> &data,
-				const bitmask &bits,
-				const std::size_t &index)
-		{
-			return bits & 1 ? boost::optional<Head &>(data.data[index])
-							: boost::none;
-		}
-
-		static std::vector<Head> &get_data(SystemData<Head, Tail...> &data)
-		{
-			return data.data;
-		}
-
-		static bitmask get_flag(const SystemData<Head, Tail...> &) { return 1; }
-	};
-
-	template <typename Type, typename Head, typename... Tail>
-	struct SystemGetter<Type, SystemData<Head, Tail...>> {
-		static auto get(
-				SystemData<Head, Tail...> &data,
-				const bitmask &bits,
-				const std::size_t &index)
-		{
-			return SystemGetter<Type, SystemData<Tail...>>::get(
-					data.tail,
-					bits >> 1,
-					index);
-		}
-
-		static std::vector<Type> &get_data(SystemData<Head, Tail...> &data)
-		{
-			return SystemGetter<Type, SystemData<Tail...>>::get_data(data.tail);
-		}
-
-		static bitmask get_flag(const SystemData<Head, Tail...> &data)
-		{
-			return SystemGetter<Type, SystemData<Tail...>>::get_flag(data.tail)
-				   << 1;
-		}
-	};
-
 	template <typename Head, typename... Tail>
 	struct GetIndex<0, ComponentConfig<Head, Tail...>> {
 		static boost::optional<Head> &get(ComponentConfig<Head, Tail...> &cc)
@@ -510,6 +460,51 @@ namespace detail
 			return GetType<Type, ComponentConfig<Tail...>>::get(cc.tail);
 		}
 	};
+
+	template <typename Head, typename... Tail>
+	struct GetType<Head, SystemData<Head, Tail...>> {
+		static auto get(
+				SystemData<Head, Tail...> &data,
+				const bitmask &bits,
+				const std::size_t &index)
+		{
+			return bits & 1 ? boost::optional<Head &>(data.data[index])
+							: boost::none;
+		}
+
+		static std::vector<Head> &get_data(SystemData<Head, Tail...> &data)
+		{
+			return data.data;
+		}
+
+		static bitmask get_flag(const SystemData<Head, Tail...> &) { return 1; }
+	};
+
+	template <typename Type, typename Head, typename... Tail>
+	struct GetType<Type, SystemData<Head, Tail...>> {
+		static auto get(
+				SystemData<Head, Tail...> &data,
+				const bitmask &bits,
+				const std::size_t &index)
+		{
+			return GetType<Type, SystemData<Tail...>>::get(
+					data.tail,
+					bits >> 1,
+					index);
+		}
+
+		static std::vector<Type> &get_data(SystemData<Head, Tail...> &data)
+		{
+			return GetType<Type, SystemData<Tail...>>::get_data(data.tail);
+		}
+
+		static bitmask get_flag(const SystemData<Head, Tail...> &data)
+		{
+			return GetType<Type, SystemData<Tail...>>::get_flag(data.tail)
+				   << 1;
+		}
+	};
+
 }  // namespace detail
 
 }  // namespace secs
