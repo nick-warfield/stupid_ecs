@@ -90,6 +90,27 @@ TEST_CASE("System Make Benchmark", "[benchmark][system][make]")
 		sys.erase(e);
 		meter.measure([&sys, &cc] { sys.make(cc); });
 	};
+
+	BENCHMARK_ADVANCED("System<TYPES>::make() 1000 entities")
+	(Catch::Benchmark::Chronometer meter)
+	{
+		System<TYPES> sys;
+		ComponentConfig<TYPES> cc;
+		meter.measure([&sys, &cc] {
+				for (int i = 0; i < 1000; ++i) sys.make(cc);
+			});
+	};
+
+	BENCHMARK_ADVANCED("System<TYPES>::make() 1000 entities with iterator")
+	(Catch::Benchmark::Chronometer meter)
+	{
+		System<TYPES> sys;
+		std::vector<ComponentConfig<TYPES>> cc;
+		for (int i = 0; i < 1000; ++i)
+			cc.push_back(ComponentConfig<TYPES>());
+		meter.measure([&sys, &cc] { sys.make(cc.begin(), cc.end()); });
+	};
+
 };
 
 TEST_CASE("System Erase Benchmark", "[benchmark][system][erase]")
