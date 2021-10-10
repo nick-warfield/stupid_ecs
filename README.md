@@ -21,6 +21,11 @@ Usage:
 		* Not sure if Item needs to exsist
 		* If it should exsist, it needs to be System::Item
 * Consolidate static Get Helpers
+* Optimizations:
+	* constexpr where I can
+	* inlining
+	* dense pack all data
+	* move constructors and all that
 * Multi-Threading:
 	* Library Should be thread-safe
 	* Integrate multithreading into System?
