@@ -25,6 +25,7 @@ Usage:
 	* inlining
 	* dense pack all data
 	* move constructors and all that
+	* nullopt configs should be uninitialized instead of using default constructor
 * Multi-Threading:
 	* Library Should be thread-safe
 	* Integrate multithreading into System?
