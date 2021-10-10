@@ -12,6 +12,7 @@ Usage:
 
 1.0 Release TODO:
 * Finalize Interface:
+	* System::make & System::erase should take iterators as arguments
 	* Make entities hold a system reference?
 		* this would enable end users to not pass around a system everywhere
 		* would also make entites fat
@@ -20,8 +21,6 @@ Usage:
 		* Not sure if Item needs to exsist
 		* If it should exsist, it needs to be System::Item
 * Consolidate static Get Helpers
-* User defined max number of components
-	* prolly need some #ifdefs to accomplish this
 * Multi-Threading:
 	* Library Should be thread-safe
 	* Integrate multithreading into System?
