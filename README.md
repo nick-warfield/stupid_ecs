@@ -12,10 +12,6 @@ Usage:
 
 1.0 Release TODO:
 * Finalize Interface:
-	* Make entities hold a system reference?
-		* this would enable end users to not pass around a system everywhere
-		* would also make entites fat
-		* hides the fact that entites need to reference a system, not sure if this is good or bad
 	* Item changes
 		* Not sure if Item needs to exsist
 		* If it should exsist, it needs to be System::Item
