@@ -28,8 +28,17 @@ struct Filter;
 
 namespace detail
 {
-	using bitmask              = uint16_t;
-	const bitmask ENTITY_ALIVE = 0b1000000000000000;
+	template <uint bits>
+	using bitmask =
+	typename std::conditional<bits < 8, uint8_t,
+		  typename std::conditional<bits < 16, uint16_t,
+				  typename std::conditional<bits<32, uint32_t,
+					  uint64_t
+				  >::type
+			>::type
+	>::type;
+
+	constexpr uint64_t pow(uint64_t v, uint64_t e) { return (e == 0) ? 1 : v * pow(v, e - 1); }
 
 	template <typename... T>
 	struct SystemData;
@@ -132,8 +141,10 @@ class System
 
 	std::stack<std::size_t> m_next_alloc;
 	std::vector<std::size_t> m_generation;
-	std::vector<detail::bitmask> m_component;
+	std::vector<detail::bitmask<sizeof...(T)>> m_component;
 	detail::SystemData<T...> m_data;
+	static const detail::bitmask<sizeof...(T)> ENTITY_ALIVE =
+		detail::pow(2, sizeof...(T));
 
    public:
 	Entity make(const ComponentConfig<T...> &cc)
@@ -151,9 +162,9 @@ class System
 
 		auto mask =
 				detail::SystemHelper<detail::SystemData<T...>>::get_mask(cc);
-		detail::assign_or_push<detail::bitmask>(
+		detail::assign_or_push<detail::bitmask<sizeof...(T)>>(
 				m_component,
-				detail::ENTITY_ALIVE | mask,
+				ENTITY_ALIVE | mask,
 				next);
 
 		return Entity(m_generation[next], next);
@@ -163,7 +174,7 @@ class System
 	{
 		if (!is_alive(id))
 			return;
-		m_component[id.index] &= ~detail::ENTITY_ALIVE;
+		m_component[id.index] &= ~ENTITY_ALIVE;
 		m_next_alloc.push(id.index);
 	}
 
@@ -197,7 +208,7 @@ class System
 	bool is_alive(const Entity &id) const
 	{
 		return m_generation[id.index] == id.generation
-			   && m_component[id.index] & detail::ENTITY_ALIVE;
+			   && m_component[id.index] & ENTITY_ALIVE;
 	}
 };
 
@@ -206,9 +217,9 @@ struct Filter<System<T...>> {
 	Filter(System<T...> *sys) : m_ptr(sys) {}
 
 	// this should really be a part of SystemHelper
-	static detail::bitmask mask(const detail::SystemData<T...> &)
+	static detail::bitmask<sizeof...(T)> mask(const detail::SystemData<T...> &)
 	{
-		return detail::ENTITY_ALIVE;
+		return System<T...>::ENTITY_ALIVE;
 	}
 
 	// this should really be a part of SystemHelper
@@ -220,7 +231,7 @@ struct Filter<System<T...>> {
 	struct Iterator {
 		Iterator(size_t index, System<T...> *ptr) :
 			m_index(index),
-			m_mask(detail::ENTITY_ALIVE),
+			m_mask(System<T...>::ENTITY_ALIVE),
 			m_ptr(ptr)
 		{
 		}
@@ -250,7 +261,7 @@ struct Filter<System<T...>> {
 
 	   private:
 		std::size_t m_index;
-		const detail::bitmask m_mask;
+		const detail::bitmask<sizeof...(T)> m_mask;
 		System<T...> *const m_ptr;
 	};
 
@@ -258,8 +269,8 @@ struct Filter<System<T...>> {
 	{
 		size_t index = 0;
 		while (index < m_ptr->m_component.size()
-			   && (m_ptr->m_component[index] & detail::ENTITY_ALIVE)
-						  != detail::ENTITY_ALIVE) {
+			   && (m_ptr->m_component[index] & System<T...>::ENTITY_ALIVE)
+						  != System<T...>::ENTITY_ALIVE) {
 			index++;
 		}
 
@@ -284,7 +295,8 @@ struct Filter<System<T...>, Data1, DataN...> {
 	}
 
 	// this should really be a part of SystemHelper
-	static detail::bitmask mask(const detail::SystemData<T...> &data)
+	static detail::bitmask<sizeof...(T)> mask(
+			const detail::SystemData<T...> &data)
 	{
 		return detail::GetType<Data1, detail::SystemData<T...>>::get_flag(data)
 			   | Filter<System<T...>, DataN...>::mask(data);
@@ -303,7 +315,10 @@ struct Filter<System<T...>, Data1, DataN...> {
 	}
 
 	struct Iterator {
-		Iterator(size_t index, detail::bitmask mask, System<T...> *ptr) :
+		Iterator(
+				size_t index,
+				detail::bitmask<sizeof...(T)> mask,
+				System<T...> *ptr) :
 			m_index(index),
 			m_mask(mask),
 			m_ptr(ptr)
@@ -337,7 +352,7 @@ struct Filter<System<T...>, Data1, DataN...> {
 
 	   private:
 		std::size_t m_index;
-		const detail::bitmask m_mask;
+		const detail::bitmask<sizeof...(T)> m_mask;
 		System<T...> *const m_ptr;
 	};
 
@@ -359,21 +374,22 @@ struct Filter<System<T...>, Data1, DataN...> {
 
    private:
 	System<T...> *const m_ptr;
-	const detail::bitmask m_mask;
+	const detail::bitmask<sizeof...(T)> m_mask;
 };
 
 namespace detail
 {
 	template <>
 	struct SystemHelper<SystemData<>> {
-		static bitmask get_mask(const ComponentConfig<> &) { return 0; }
+		static bitmask<0> get_mask(const ComponentConfig<> &) { return 0; }
 
 		static void
 		write(const ComponentConfig<> &, SystemData<> &, const size_t &)
 		{
 		}
 
-		static Item<> get_item(SystemData<> &, const bitmask &, const size_t &)
+		static Item<>
+		get_item(SystemData<> &, const bitmask<0> &, const size_t &)
 		{
 			return Item<>();
 		}
@@ -381,7 +397,8 @@ namespace detail
 
 	template <typename Head, typename... Tail>
 	struct SystemHelper<SystemData<Head, Tail...>> {
-		static bitmask get_mask(const ComponentConfig<Head, Tail...> &cc)
+		static bitmask<1 + sizeof...(Tail)> get_mask(
+				const ComponentConfig<Head, Tail...> &cc)
 		{
 			auto mask = SystemHelper<SystemData<Tail...>>::get_mask(cc.tail);
 			return mask << 1 | cc.item.has_value();
@@ -398,7 +415,7 @@ namespace detail
 
 		static Item<Head, Tail...> get_item(
 				SystemData<Head, Tail...> &data,
-				const bitmask &bits,
+				const bitmask<1 + sizeof...(Tail)> &bits,
 				const size_t &index)
 		{
 			auto value = bits & 1 ? boost::optional<Head &>(data.data[index])
@@ -447,7 +464,7 @@ namespace detail
 	struct GetType<Head, SystemData<Head, Tail...>> {
 		static auto get(
 				SystemData<Head, Tail...> &data,
-				const bitmask &bits,
+				const bitmask<1 + sizeof...(Tail)> &bits,
 				const std::size_t &index)
 		{
 			return bits & 1 ? boost::optional<Head &>(data.data[index])
@@ -459,14 +476,18 @@ namespace detail
 			return data.data;
 		}
 
-		static bitmask get_flag(const SystemData<Head, Tail...> &) { return 1; }
+		static bitmask<1 + sizeof...(Tail)> get_flag(
+				const SystemData<Head, Tail...> &)
+		{
+			return 1;
+		}
 	};
 
 	template <typename Type, typename Head, typename... Tail>
 	struct GetType<Type, SystemData<Head, Tail...>> {
 		static auto get(
 				SystemData<Head, Tail...> &data,
-				const bitmask &bits,
+				const bitmask<1 + sizeof...(Tail)> &bits,
 				const std::size_t &index)
 		{
 			return GetType<Type, SystemData<Tail...>>::get(
@@ -480,7 +501,8 @@ namespace detail
 			return GetType<Type, SystemData<Tail...>>::get_data(data.tail);
 		}
 
-		static bitmask get_flag(const SystemData<Head, Tail...> &data)
+		static bitmask<1 + sizeof...(Tail)> get_flag(
+				const SystemData<Head, Tail...> &data)
 		{
 			return GetType<Type, SystemData<Tail...>>::get_flag(data.tail) << 1;
 		}
