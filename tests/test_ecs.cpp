@@ -2,11 +2,29 @@
 #include <boost/optional.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <iostream>
+#include <limits>
 
 #include "catch.hpp"
 #include "stupid_ecs.hpp"
 
 using namespace secs;
+
+template <uint N>
+struct loop {
+	void operator()() {
+		REQUIRE(std::numeric_limits<detail::bitmask<N>>::digits > N);
+		loop<N-1>()();
+	}
+};
+template <>
+struct loop<0> {
+	void operator()() {
+		REQUIRE(std::numeric_limits<detail::bitmask<0>>::digits > 0);
+	}
+};
+TEST_CASE("autosize bitmask", "[detail]") {
+	loop<63>()();
+}
 
 TEST_CASE("item Config Setting Values", "[item]")
 {
