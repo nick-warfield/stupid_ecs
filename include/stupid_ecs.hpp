@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <boost/optional.hpp>
 #include <stack>
 #include <tuple>
@@ -29,16 +30,18 @@ struct Filter;
 namespace detail
 {
 	template <uint bits>
-	using bitmask =
-	typename std::conditional<bits < 8, uint8_t,
-		  typename std::conditional<bits < 16, uint16_t,
-				  typename std::conditional<bits<32, uint32_t,
-					  uint64_t
-				  >::type
-			>::type
-	>::type;
+	using bitmask = typename std::conditional < bits < 8,
+		  uint8_t,
+		  typename std::conditional < bits<
+				  16,
+				  uint16_t,
+				  typename std::conditional<
+						  bits<32, uint32_t, uint64_t>::type>::type>::type;
 
-	constexpr uint64_t pow(uint64_t v, uint64_t e) { return (e == 0) ? 1 : v * pow(v, e - 1); }
+	constexpr uint64_t pow(uint64_t v, uint64_t e)
+	{
+		return (e == 0) ? 1 : v * pow(v, e - 1);
+	}
 
 	template <typename... T>
 	struct SystemData;
@@ -144,7 +147,7 @@ class System
 	std::vector<detail::bitmask<sizeof...(T)>> m_component;
 	detail::SystemData<T...> m_data;
 	static const detail::bitmask<sizeof...(T)> ENTITY_ALIVE =
-		detail::pow(2, sizeof...(T));
+			detail::pow(2, sizeof...(T));
 
    public:
 	Entity make(const ComponentConfig<T...> &cc)
@@ -170,12 +173,39 @@ class System
 		return Entity(m_generation[next], next);
 	}
 
+	template <typename Iterator>
+	std::vector<Entity> make(Iterator begin, Iterator end)
+	{
+		std::vector<Entity> ent;
+		size_t next_size =
+				m_generation.size()
+				+ std::max(
+						static_cast<size_t>(std::distance(begin, end))
+								- m_next_alloc.size(),
+						static_cast<size_t>(0));
+		m_generation.reserve(next_size);
+		m_component.reserve(next_size);
+		detail::SystemHelper<detail::SystemData<T...>>::reserve(
+				m_data,
+				next_size);
+
+		for (auto it = begin; it != end; it++) ent.push_back(make(*it));
+
+		return ent;
+	}
+
 	void erase(const Entity &id)
 	{
 		if (!is_alive(id))
 			return;
 		m_component[id.index] &= ~ENTITY_ALIVE;
 		m_next_alloc.push(id.index);
+	}
+
+	template <typename Iterator>
+	void erase(Iterator begin, Iterator end)
+	{
+		for (auto it = begin; it != end; it++) { erase(*it); }
 	}
 
 	boost::optional<Item<T...>> operator[](const Entity &id)
@@ -383,6 +413,8 @@ namespace detail
 	struct SystemHelper<SystemData<>> {
 		static bitmask<0> get_mask(const ComponentConfig<> &) { return 0; }
 
+		static void reserve(SystemData<> &, const size_t &) {}
+
 		static void
 		write(const ComponentConfig<> &, SystemData<> &, const size_t &)
 		{
@@ -402,6 +434,12 @@ namespace detail
 		{
 			auto mask = SystemHelper<SystemData<Tail...>>::get_mask(cc.tail);
 			return mask << 1 | cc.item.has_value();
+		}
+
+		static void reserve(SystemData<Head, Tail...> &data, const size_t &size)
+		{
+			data.data.reserve(size);
+			SystemHelper<SystemData<Tail...>>::reserve(data.tail, size);
 		}
 
 		static void write(

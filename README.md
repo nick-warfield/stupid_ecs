@@ -12,7 +12,6 @@ Usage:
 
 1.0 Release TODO:
 * Finalize Interface:
-	* System::make & System::erase should take iterators as arguments
 	* Make entities hold a system reference?
 		* this would enable end users to not pass around a system everywhere
 		* would also make entites fat

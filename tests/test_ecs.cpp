@@ -182,6 +182,33 @@ TEST_CASE("System<T, ...R> Allocation", "[system]")
 	REQUIRE(e4.index == 1);
 };
 
+TEST_CASE("System make and erase via Iterator", "[system]") {
+	using namespace Catch::literals;
+
+	System<int, char, float> sys;
+	std::vector<ComponentConfig<int, char, float>> cc;
+	for (int i = 0; i < 100; ++i) {
+		cc.emplace_back(1, 'F', 3.14);
+	}
+
+	auto count = 0;
+	auto ent = sys.make(cc.begin(), cc.end());
+	for (auto e : ent) {
+		REQUIRE(*sys.get<int>(e) == 1);
+		REQUIRE(*sys.get<char>(e) == 'F');
+		REQUIRE(*sys.get<float>(e) == 3.14_a);
+		count++;
+	}
+	REQUIRE(count == 100);
+
+	sys.erase(ent.begin(), ent.end());
+	for (auto e : ent) {
+		REQUIRE_FALSE(sys[e].has_value());
+		count--;
+	}
+	REQUIRE(count == 0);
+}
+
 TEST_CASE("System<> is_alive()", "[system]")
 {
 	System system;
