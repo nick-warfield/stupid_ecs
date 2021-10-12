@@ -205,7 +205,8 @@ TEST_CASE("System Iteration Benchmark", "[benchmark][system][iteration]")
 	BENCHMARK(name.c_str())
 	{
 		auto count = 0;
-		for (auto [i] : sys.iter<int>()) {
+		for (auto [e, i] : sys.iter<int>()) {
+			(void)(e);
 			(void)(i);
 			count++;
 		}
@@ -217,7 +218,8 @@ TEST_CASE("System Iteration Benchmark", "[benchmark][system][iteration]")
 	BENCHMARK(name.c_str())
 	{
 		auto count = 0;
-		for (auto [i] : sys.iter<uint>()) {
+		for (auto [e, i] : sys.iter<uint>()) {
+			(void)(e);
 			(void)(i);
 			count++;
 		}
@@ -227,7 +229,8 @@ TEST_CASE("System Iteration Benchmark", "[benchmark][system][iteration]")
 	BENCHMARK("Iterate over Position & Velocity with Filter & 81\% hit rate")
 	{
 		auto count = 0;
-		for (auto [pos, vel] : sys.iter<Position, Velocity>()) {
+		for (auto [e, pos, vel] : sys.iter<Position, Velocity>()) {
+			(void)(e);
 			(void)(pos);
 			(void)(vel);
 			count++;
@@ -238,10 +241,10 @@ TEST_CASE("System Iteration Benchmark", "[benchmark][system][iteration]")
 	BENCHMARK("Iterate over Position & Velocity with Item & 81\% hit rate")
 	{
 		auto count = 0;
-		for (auto item : sys.iter()) {
-			if (item.get<Position &>() && item.get<Velocity &>()) {
-				(void)(item.get<Position &>());
-				(void)(item.get<Velocity &>());
+		for (auto [entity] : sys.iter()) {
+			if (sys.get<Position>(entity) && sys.get<Velocity>(entity)) {
+				(void)(sys.get<Position>(entity));
+				(void)(sys.get<Velocity>(entity));
 				count++;
 			}
 		}
