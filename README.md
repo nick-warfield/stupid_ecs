@@ -11,7 +11,6 @@ Usage:
 
 1.0 Release TODO:
 * Finalize Interface:
-	* Filter::Iterator should provide an entity
 	* System::export() - returns all living entities as a vector of components
 	* Read & Write ComponentConfigs to file
 	* Item changes
@@ -26,6 +25,7 @@ Usage:
 	* nullopt configs should be uninitialized instead of using default constructor
 	* arena allocation?
 	* replace vector with arrays?
+	* improve compile times
 * Multi-Threading:
 	* Library Should be thread-safe
 	* Integrate multithreading into System?
