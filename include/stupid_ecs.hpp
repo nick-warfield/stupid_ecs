@@ -266,9 +266,9 @@ struct Filter<System<T...>> {
 		{
 		}
 
-		Item<T...> operator*() const
+		std::tuple<Entity> operator*() const
 		{
-			return *(*m_ptr)[Entity(m_ptr->m_generation[m_index], m_index)];
+			return Entity(m_ptr->m_generation[m_index], m_index);
 		}
 
 		bool operator==(const Iterator &other) const
@@ -355,11 +355,13 @@ struct Filter<System<T...>, Data1, DataN...> {
 		{
 		}
 
-		std::tuple<Data1 &, DataN &...> operator*() const
+		std::tuple<Entity, Data1 &, DataN &...> operator*() const
 		{
-			return Filter<System<T...>, Data1, DataN...>::get(
+			Entity entity(m_ptr->m_generation[m_index], m_index);
+			auto items = Filter<System<T...>, Data1, DataN...>::get(
 					m_ptr->m_data,
 					m_index);
+			return std::tuple_cat(std::tuple(entity), items);
 		}
 
 		bool operator==(const Iterator &other) const
