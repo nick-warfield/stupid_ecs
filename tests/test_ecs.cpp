@@ -342,22 +342,22 @@ TEST_CASE("System Iterator<>", "[system]")
 	}
 
 	int index = 0;
-	for (auto i : sys.iter<>()) {
-		REQUIRE(i.get<int &>().has_value());
-		REQUIRE(*i.get<int &>() == index);
+	for (auto [entity] : sys.iter<>()) {
+		REQUIRE(sys.get<int>(entity).has_value());
+		REQUIRE(*sys.get<int>(entity) == index);
 		REQUIRE(*sys.get<int>(ent[index]) == index);
 
-		(*i.get<int &>())++;
-		REQUIRE(*i.get<int &>() == index + 1);
+		(*sys.get<int>(entity))++;
+		REQUIRE(*sys.get<int>(entity) == index + 1);
 		REQUIRE(*sys.get<int>(ent[index]) == index + 1);
 
-		if (i.get<char &>())
-			REQUIRE(*i.get<char &>() == 'F');
+		if (sys.get<char>(entity))
+			REQUIRE(*sys.get<char>(entity) == 'F');
 
-		if (i.get<std::string &>()) {
-			REQUIRE(*i.get<std::string &>() == "Hello World");
-			*i.get<std::string &>() = "Beer & Pizza";
-			REQUIRE(*i.get<std::string &>() == "Beer & Pizza");
+		if (sys.get<std::string>(entity)) {
+			REQUIRE(*sys.get<std::string>(entity) == "Hello World");
+			*sys.get<std::string>(entity) = "Beer & Pizza";
+			REQUIRE(*sys.get<std::string>(entity) == "Beer & Pizza");
 		}
 
 		index++;
@@ -379,13 +379,13 @@ TEST_CASE("System Iterator<>", "[system]")
 	REQUIRE(*sys.get<std::string>(ent[20]) == "sentinel");
 	sys.erase(ent[20]);
 
-	for (auto i : sys.iter()) {
-		if (i.get<int &>())
-			REQUIRE_FALSE(*i.get<int &>() == 99);
-		if (i.get<char &>())
-			REQUIRE_FALSE(*i.get<char &>() == 'a');
-		if (i.get<std::string &>())
-			REQUIRE_FALSE(*i.get<std::string &>() == "sentinel");
+	for (auto [entity] : sys.iter()) {
+		if (sys.get<int>(entity))
+			REQUIRE_FALSE(*sys.get<int>(entity) == 99);
+		if (sys.get<char>(entity))
+			REQUIRE_FALSE(*sys.get<char>(entity) == 'a');
+		if (sys.get<std::string>(entity))
+			REQUIRE_FALSE(*sys.get<std::string>(entity) == "sentinel");
 	}
 }
 
@@ -405,7 +405,10 @@ TEST_CASE("System Iterator<T...>", "[system]")
 	}
 
 	int index = 0;
-	for (auto [num] : sys.iter<int>()) {
+	for (auto [e, num] : sys.iter<int>()) {
+		REQUIRE((int)e.index == index);
+		REQUIRE(e.generation == 0);
+
 		REQUIRE(num == index);
 		REQUIRE(*sys.get<int>(ent[index]) == index);
 
@@ -420,7 +423,10 @@ TEST_CASE("System Iterator<T...>", "[system]")
 	}
 
 	int count = 0;
-	for (auto [n, c, s] : sys.iter<int, char, std::string>()) {
+	for (auto [e, n, c, s] : sys.iter<int, char, std::string>()) {
+		REQUIRE((int)e.index == n - 1);
+		REQUIRE(e.generation == 0);
+
 		REQUIRE((n - 1) % 5 == 0);
 		REQUIRE(c == 'F');
 		c = 'j';
@@ -431,7 +437,10 @@ TEST_CASE("System Iterator<T...>", "[system]")
 	REQUIRE(count == 3);
 
 	count = 0;
-	for (auto [c, s, n] : sys.iter<char, std::string, int>()) {
+	for (auto [e, c, s, n] : sys.iter<char, std::string, int>()) {
+		REQUIRE((int)e.index == n - 1);
+		REQUIRE(e.generation == 0);
+
 		REQUIRE((n - 1) % 5 == 0);
 		REQUIRE(c == 'j');
 		REQUIRE(s == "Hello World");
@@ -459,7 +468,7 @@ TEST_CASE("System Iterator<T...>", "[system]")
 	sys.erase(ent[10]);
 
 	index = 0;
-	for (auto [n] : sys.iter<int>()) REQUIRE_FALSE(n == 99);
-	for (auto [c] : sys.iter<char>()) REQUIRE_FALSE(c == 'a');
-	for (auto [s] : sys.iter<std::string>()) REQUIRE_FALSE(s == "sentinel");
+	for (auto [_, n] : sys.iter<int>()) REQUIRE_FALSE(n == 99);
+	for (auto [_, c] : sys.iter<char>()) REQUIRE_FALSE(c == 'a');
+	for (auto [_, s] : sys.iter<std::string>()) REQUIRE_FALSE(s == "sentinel");
 }
