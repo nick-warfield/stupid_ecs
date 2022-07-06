@@ -11,11 +11,9 @@ using namespace secs;
 
 struct Position {
 	float x, y, z;
-	Position &operator=(const Position &) = default;
 };
 struct Velocity {
 	float x, y, z;
-	Velocity &operator=(const Velocity &) = default;
 };
 
 #define TYPES int, uint, string, Position, Velocity
