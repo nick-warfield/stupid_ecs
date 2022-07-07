@@ -1,4 +1,5 @@
 #include <atomic>
+#include <algorithm>
 #include <thread>
 #include <vector>
 #include <queue>
