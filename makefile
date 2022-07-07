@@ -35,6 +35,9 @@ ifeq (run,$(firstword $(MAKECMDGOALS)))
 else ifeq (test,$(firstword $(MAKECMDGOALS)))
   RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(RUN_ARGS):;@:)
+else ifeq (bench,$(firstword $(MAKECMDGOALS)))
+  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(RUN_ARGS):;@:)
 endif
 
 $(OBJECT_DIR)/%.o: $(SOURCE_DIR)/%.cpp $(HEADERS)
@@ -52,7 +55,7 @@ $(TEST_DIR)/obj/test_%.o: $(TEST_DIR)/test_%.cpp $(HEADERS)
 $(TEST_DIR)/.test: init-tests $(TEST_OBJECTS)
 	$(CC) -o $@ $(TEST_OBJECTS) $(CFLAGS) -O0 -g --coverage $(LDFLAGS)
 
-.PHONY: run clean test bench init-tests init-build all
+.PHONY: run clean test coverage bench init-tests init-build all
 
 all: $(BUILD_DIR)/$(BINARY_NAME) $(TEST_DIR)/.test
 
@@ -66,12 +69,16 @@ clean:
 	@[ ! -e $(TEST_DIR)/.test ] || trash $(TEST_DIR)/.test
 
 bench: $(TEST_DIR)/.test
-	@unbuffer ./$(TEST_DIR)/.test '[benchmark]' --benchmark-no-analysis \
+	@unbuffer ./$(TEST_DIR)/.test '[benchmark]' $(RUN_ARGS) --benchmark-no-analysis \
 		| tee tests/reports/benchmark.txt
 
 test: $(TEST_DIR)/.test
 	@unbuffer ./$(TEST_DIR)/.test ~'[benchmark]' $(RUN_ARGS) \
 		| tee tests/reports/report.txt
+
+coverage: $(TEST_DIR)/.test
+	@$(MAKE) clean
+	@$(MAKE) test
 	@llvm-cov gcov -o tests/obj tests/test_*.cpp -bcfp > /dev/null
 	@unbuffer gcovr -g -f src -f include \
 		--html-details tests/reports/html/coverage.html \
