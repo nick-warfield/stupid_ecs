@@ -1,0 +1,27 @@
+#define CATCH_CONFIG_ENABLE_BENCHMARKING
+
+#include <thread>
+#include <vector>
+
+#include "catch.hpp"
+#include "atomic_queue.hpp"
+
+using namespace std;
+
+TEST_CASE("Atomic Queue Benchmarks", "[benchmark][atomic_queue]") {
+	AtomicQueue<int, 1000> aq;
+	BENCHMARK("push 1 item") { aq.push(0); };
+
+	while (!aq.is_full()) {
+		aq.push(0);
+	}
+	BENCHMARK("pop 1 item") {
+		REQUIRE(!aq.is_empty());
+		return aq.pop();
+	};
+
+	BENCHMARK("push 1000 items single producer") { };
+	BENCHMARK("push 1000 items multi producer") { };
+	BENCHMARK("pop 1000 items single consumer") { };
+	BENCHMARK("pop 1000 items multi consumer") { };
+}
