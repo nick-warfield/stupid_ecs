@@ -65,7 +65,11 @@ public:
 		stop();
 	}
 
-	bool push(work job) {
+	void push(work job) {
+		while (!job_queue.push(job)) { }
+	}
+
+	bool push_no_wait(work job) {
 		return job_queue.push(job);
 	}
 

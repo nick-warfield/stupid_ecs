@@ -9,7 +9,7 @@ TEST_CASE("Thread Pool completes jobs", "[thread_pool]") {
 	atomic<int> counter = 0;
 	int jobs = 1000;
 	for (int i = 0; i < jobs; ++i) {
-		REQUIRE(tp.push([&counter]() { counter++; }));
+		REQUIRE(tp.push_no_wait([&counter]() { counter++; }));
 	}
 	tp.finish_jobs();
 	REQUIRE(counter.load() == jobs);
@@ -28,7 +28,7 @@ TEST_CASE("Thread Pool clears queued jobs", "[thread_pool]") {
 	atomic<int> counter = 0;
 	int jobs = 1000;
 	for (int i = 0; i < jobs; ++i) {
-		REQUIRE(tp.push([&counter]() { sleep(1); counter++; }));
+		REQUIRE(tp.push_no_wait([&counter]() { sleep(1); counter++; }));
 	}
 	tp.clear_jobs();
 	REQUIRE(counter.load() < jobs);
@@ -41,7 +41,7 @@ TEST_CASE("Thread Pool can start & stop", "[thread_pool]") {
 
 	tp.stop();
 	for (int i = 0; i < jobs; ++i) {
-		REQUIRE(tp.push([&counter]() { counter++; }));
+		REQUIRE(tp.push_no_wait([&counter]() { counter++; }));
 	}
 
 	REQUIRE(counter.load() == 0);
@@ -55,7 +55,7 @@ TEST_CASE("Thread Pool can start & stop", "[thread_pool]") {
 
 	tp.stop();
 	for (int i = 0; i < jobs; ++i) {
-		REQUIRE(tp.push([&counter]() { counter++; }));
+		REQUIRE(tp.push_no_wait([&counter]() { counter++; }));
 	}
 	tp.start();
 	tp.finish_jobs();
